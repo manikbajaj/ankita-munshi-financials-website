@@ -1,5 +1,6 @@
-from flask import Flask,render_template
-from flask import render_template
+import os
+
+from flask import Flask, render_template
 from dotenv import load_dotenv
 load_dotenv()
 from modules.firebase_client import FirebaseClient
@@ -16,7 +17,7 @@ from modules.employee.employee_sales_routes import bp as employee_sales_bp
 app = Flask(__name__)
 
 
-app.secret_key = "super-secret-key-change-this"
+app.secret_key = os.environ["FLASK_SECRET_KEY"]
 
 
 app.register_blueprint(admin_bp)

@@ -197,7 +197,7 @@ The app does **not** use Flask-Login or any auth library. Auth is hand-rolled an
 
 - **Admin login** — POSTs email/password to Firebase Identity Toolkit via `FirebaseClient.firebase_login_with_email_password`, which calls `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=<FIREBASE_API_KEY>`. The Firebase API key is therefore embedded in the running app's env and is required to be valid.
 - **Partner / employee onboarding** — phone/email lookup → OTP → set password → subsequent password logins. OTP is logged in the `otp_log` Firestore collection.
-- **Flask session secret** — currently hardcoded in [app.py:18](app.py#L18) as `"super-secret-key-change-this"`. **This must be rotated** (move into `.env` as e.g. `FLASK_SECRET_KEY` and read with `os.getenv`) before going live anywhere new. Rotating it invalidates existing sessions.
+- **Flask session secret** — read from the `FLASK_SECRET_KEY` env var (loaded from `.env`). The app raises `KeyError` at import if the variable is missing. Rotate per environment; rotating invalidates existing sessions.
 
 ---
 
@@ -208,6 +208,7 @@ The app does **not** use Flask-Login or any auth library. Auth is hand-rolled an
 | `FIREBASE_API_KEY` | yes | `.env` | Google API key used for Identity Toolkit email/password login |
 | `FIREBASE_STORAGE_BUCKET` | yes | `.env` | Default bucket: `munshifinancials-c365a.firebasestorage.app` |
 | `FIREBASE_CREDENTIALS` | no | defaults to `key.json` in CWD | Path to the GCP service-account JSON |
+| `FLASK_SECRET_KEY` | yes | `.env` | Signs Flask session cookies. App raises `KeyError` at import if missing. Rotate per environment. |
 
 [.env.example](.env.example) holds the template (no values).
 
@@ -260,7 +261,7 @@ These are observations from reading the code as it was captured on 2026-05-19. F
    - `hash_otp(otp)` returns the OTP verbatim (no bcrypt hash; real call is commented out).
    - `verify_otp_hash(otp, hashed)` returns the OTP itself instead of a boolean.
    This means in production today **any partner or employee can log in with OTP `100001`**, and stored OTPs are plaintext. This must be reverted to the bcrypt-based implementation before going live on the new server.
-2. **Hardcoded Flask `app.secret_key`** — see §6.
+2. ~~**Hardcoded Flask `app.secret_key`**~~ — fixed; now read from `FLASK_SECRET_KEY` env var.
 3. **`startup.sh` is misleading** — binds gunicorn to `0.0.0.0` and is not what systemd runs. Treat as dead code or update it to mirror the systemd unit.
 4. **`User=root` in the systemd unit** — the legacy box runs gunicorn as root. The new deployment should run the app under a dedicated non-root user (e.g. `munshi`) for least privilege.
 5. **`return requests.post(...).json()` in `firebase_login_with_email_password`** — no exception handling around network failures. Wrap before relying on it for new code.
