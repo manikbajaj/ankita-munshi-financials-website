@@ -9,6 +9,11 @@ key.json
 # Local backup of the legacy server (contains secrets in the tarball)
 backup/
 
+# Server access / deployment instructions — keep local, never push
+instructions.pdf
+instructions*.pdf
+*.access.md
+
 # Python
 __pycache__/
 *.pyc
