@@ -1,0 +1,75 @@
+{% extends "employee/sales/layout.html" %}
+{% block sales_content %}
+
+<h4 class="mb-3">Sales Dashboard</h4>
+
+<form method="GET" class="row g-2 mb-3 align-items-end">
+
+<div class="col-md-3">
+<input name="search" value="{{ request.args.get('search','') }}"
+class="form-control" placeholder="Search Order / Partner">
+</div>
+
+<div class="col-md-3">
+<select name="partner" class="form-select">
+<option value="">All Partners</option>
+{% for p in partners %}
+<option value="{{ p }}" {% if request.args.get('partner')==p %}selected{% endif %}>
+{{ p }}
+</option>
+{% endfor %}
+</select>
+</div>
+
+<div class="col-md-2">
+<select name="status" class="form-select">
+<option value="">Any Status</option>
+<option value="pending" {% if request.args.get('status')=='pending' %}selected{% endif %}>Pending</option>
+<option value="in_progress" {% if request.args.get('status')=='in_progress' %}selected{% endif %}>In Progress</option>
+<option value="completed" {% if request.args.get('status')=='completed' %}selected{% endif %}>Completed</option>
+</select>
+</div>
+
+<div class="col-md-2">
+<button class="btn btn-primary w-100">Apply</button>
+</div>
+
+<div class="col-md-2">
+<a href="{{ url_for('employee_sales.dashboard') }}" class="btn btn-outline-secondary w-100">Reset</a>
+</div>
+
+</form>
+
+<table class="table table-bordered bg-white">
+<thead>
+<tr>
+<th>Order</th>
+<th>Date</th>
+<th>Partner</th>
+<th>Amount</th>
+<th>Status</th>
+</tr>
+</thead>
+
+<tbody>
+{% for o in orders %}
+<tr>
+<td>{{ o.order_number }}</td>
+<td>{{ o.created_at_fmt }}</td>
+<td>{{ o.partner_display }}</td>
+<td>₹{{ o.amount_total }}</td>
+<td>
+{% if o.status=="completed" %}
+<span class="badge bg-success">Completed</span>
+{% elif o.status=="in_progress" %}
+<span class="badge bg-primary">In Progress</span>
+{% else %}
+<span class="badge bg-warning text-dark">Pending</span>
+{% endif %}
+</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+{% endblock %}

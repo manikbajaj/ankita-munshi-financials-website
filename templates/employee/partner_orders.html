@@ -1,0 +1,1752 @@
+{% extends "base.html" %}
+{% block title %}Partner Orders{% endblock %}
+
+{% block content %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
+<style>
+  /* --- OLD / COMPACT NAVBAR THEME --- */
+  body {
+    background: #f3f5f7;
+  }
+
+  .layout {
+    display: flex;
+    width: 100%;
+  }
+
+  .sidebar {
+    width: 240px;
+    min-width: 240px;
+    background: #0b1220;
+    color: #e6eef8;
+    min-height: calc(100vh - 80px);
+    padding: 22px;
+    position: sticky;
+    top: 80px;
+  }
+
+  .main {
+    width: calc(100% - 240px);
+    padding: 28px;
+  }
+
+  .sidebar .nav-link {
+    display: block;
+    padding: 8px 10px;
+    border-radius: 6px;
+    color: #cbd5f5;
+    text-decoration: none;
+    font-size: 14px;
+    margin-bottom: 4px;
+  }
+
+  .sidebar .nav-link.active,
+  .sidebar .nav-link:hover {
+    background: #12233b;
+    color: #fff;
+  }
+
+  .stat-card {
+    background: white;
+    padding: 14px 18px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    flex: 1;
+  }
+
+  .table thead th {
+    position: sticky;
+    top: 0;
+    background: white;
+    z-index: 10;
+  }
+
+  .filters {
+    background: white;
+    padding: 12px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  }
+
+  .status-badge {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .badge-active {
+    background: #d1fae5;
+    color: #065f46;
+  }
+
+  .badge-inactive {
+    background: #fee2e2;
+    color: #991b1b;
+  }
+
+  .badge-pending {
+    background: #fef9c3;
+    color: #92400e;
+  }
+
+  tr:hover {
+    background: #f9fafb !important;
+  }
+
+  .main-panel {
+    width: calc(100% - 240px);
+    padding: 28px;
+  }
+
+  /* compact table */
+  .table-compact td,
+  .table-compact th {
+    padding: 6px 8px;
+    vertical-align: middle;
+    font-size: 13px;
+  }
+
+  .small-muted {
+    color: #6b7280;
+    font-size: 13px;
+  }
+
+  /* status badges */
+  .badge-status {
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 12px;
+    display: inline-block;
+  }
+
+  .st-pending {
+    background: #fff7ed;
+    color: #92400e;
+  }
+
+  .st-progress {
+    background: #eff6ff;
+    color: #1e40af;
+  }
+
+  .st-complete {
+    background: #ecfdf5;
+    color: #166534;
+  }
+
+  .st-cancel {
+    background: #fff1f2;
+    color: #9f1239;
+  }
+
+  /* payment status */
+  .pay-unbilled {
+    background: #f3f4f6;
+    color: #374151;
+    padding: 4px 8px;
+    border-radius: 6px;
+  }
+
+  .pay-partial {
+    background: #fff7ed;
+    color: #92400e;
+    padding: 4px 8px;
+    border-radius: 6px;
+  }
+
+  .pay-paid {
+    background: #ecfdf5;
+    color: #166534;
+    padding: 4px 8px;
+    border-radius: 6px;
+  }
+
+  /* payments area */
+  .payments-table {
+    max-height: 220px;
+    overflow: auto;
+  }
+
+  /* loader overlay */
+  .loader-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.35);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 12000;
+  }
+
+  .loader-box {
+    background: #fff;
+    padding: 18px 22px;
+    border-radius: 8px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    box-shadow: 0 6px 30px rgba(0, 0, 0, 0.25);
+  }
+
+  .spinner {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 4px solid #e5e7eb;
+    border-top-color: #0b84ff;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* invalid txn row */
+  .txn-invalid {
+    opacity: 0.5;
+    text-decoration: line-through;
+  }
+
+  /* modal small styles */
+  .modal .small-muted {
+    font-size: 12px;
+    color: #6b7280;
+  }
+
+  /* nicer refund inputs */
+  .refund-box {
+    background: #fff9f2;
+    border: 1px solid #ffd8a8;
+    padding: 10px;
+    border-radius: 6px;
+  }
+
+  /* FIXED: Wallet validation styles - show red warning when amount exceeds wallet */
+  .wallet-warning {
+    color: #dc2626;
+    font-size: 12px;
+    font-weight: 600;
+    display: none;
+    margin-top: 4px;
+  }
+
+  .wallet-warning.show {
+    display: block;
+  }
+
+  .wallet-balance-display {
+    font-size: 13px;
+    margin-top: 4px;
+  }
+
+  .wallet-balance-display.insufficient {
+    color: #dc2626;
+    font-weight: 600;
+  }
+
+  .wallet-balance-display.sufficient {
+    color: #059669;
+  }
+</style>
+
+<div class="loader-overlay" id="loaderOverlay" aria-hidden="true">
+  <div class="loader-box" role="status" aria-live="polite">
+    <div class="spinner" aria-hidden="true"></div>
+    <div>
+      <div><strong>Working...</strong></div>
+      <div class="small-muted">Please wait</div>
+    </div>
+  </div>
+</div>
+
+<div class="layout">
+  {% include "employee/_sidebar.html" %}
+  <!-- MAIN -->
+  <div class="main-panel">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <div>
+        <h4 style="margin:0;">Partner Orders</h4>
+        <div class="small-muted">{{ user.email }}</div>
+      </div>
+      <div class="text-end">
+        <small class="small-muted">Total orders: <strong>{{ total_orders }}</strong></small>
+      </div>
+    </div>
+
+    <!-- filters (compact) -->
+    <form method="get" class="row g-2 mb-3">
+      <div class="col-auto"><input name="search" class="form-control form-control-sm" placeholder="Search"
+          value="{{ search }}"></div>
+      <div class="col-auto">
+        <select name="partner_id" class="form-select form-select-sm">
+          <option value="">All Partners</option>
+          {% for pid, p in partners_map.items() %}
+          <option value="{{ pid }}" {% if filter_partner_id==pid %}selected{% endif %}>{{ p.name or 'Unknown' }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-auto">
+        <select name="status" class="form-select form-select-sm">
+          <option value="">Any Status</option>
+          <option value="pending" {% if filter_status=='pending' %}selected{% endif %}>Pending</option>
+          <option value="in_progress" {% if filter_status=='in_progress' %}selected{% endif %}>In Progress</option>
+          <option value="completed" {% if filter_status=='completed' %}selected{% endif %}>Completed</option>
+          <option value="cancelled" {% if filter_status=='cancelled' %}selected{% endif %}>Cancelled</option>
+        </select>
+      </div>
+      <div class="col-auto">
+        <select name="payment_status" class="form-select form-select-sm">
+          <option value="">Any Payment</option>
+          <option value="unbilled" {% if filter_payment_status=='unbilled' %}selected{% endif %}>Unbilled</option>
+          <option value="partial" {% if filter_payment_status=='partial' %}selected{% endif %}>Partial</option>
+          <option value="paid" {% if filter_payment_status=='paid' %}selected{% endif %}>Paid</option>
+        </select>
+      </div>
+      <div class="col-auto">
+        <button class="btn btn-sm btn-primary">Apply</button>
+        <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('employee.partner_orders') }}">Reset</a>
+      </div>
+    </form>
+
+    <!-- table -->
+    <div class="table-responsive">
+      <table class="table table-compact table-hover align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Order No</th>
+            <th>Partner</th>
+            <th>Client</th>
+            <th>Work</th>
+            <th>Assigned</th>
+            <th>Status</th>
+            <th>Payment</th>
+            <th>Created</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for o in orders %}
+          <tr>
+            <td>{{ o.order_number or o.id }}</td>
+            <td>
+              {{ o.partner_name or (partners_map.get(o.partner_id).name if partners_map.get(o.partner_id)) or '-' }}
+            </td>
+            <td>
+              {{ o.client_name or '-' }}<br><small class="small-muted">{{ o.client_phone or '' }}</small>
+            </td>
+            <td>{{ o.work_title or '-' }}</td>
+            <td>{{ o.assigned_employee_name or '-' }}</td>
+            <td>
+              {% set st = o.status or 'pending' %}
+              <span
+                class="badge-status
+                {% if st=='pending' %}st-pending{% elif st=='in_progress' %}st-progress{% elif st=='completed' %}st-complete{% elif st=='cancelled' %}st-cancel{% endif %}">
+                {{ st.replace('_', ' ').title() }}
+              </span>
+            </td>
+            <td>
+              <div>₹{{ (o.amount_paid or 0)|int }} / ₹{{ (o.amount_total or 0)|int }}</div>
+              <div class="mt-1">
+                <small class="
+                  {% if o.payment_status == 'unbilled' %}pay-unbilled
+                  {% elif o.payment_status == 'partial' %}pay-partial
+                  {% elif o.payment_status == 'paid' %}pay-paid{% endif %}">{{ (o.payment_status or
+                  'unbilled').replace('_', ' ').title()
+                  }}</small>
+              </div>
+            </td>
+            <td>
+              {% if o.created_at %}
+              {{ o.created_at.strftime("%Y-%m-%d") }}
+              {% else %}-{% endif %}
+            </td>
+            <td>
+              <button class="btn btn-sm btn-outline-primary btn-edit-order" data-id="{{ o.id }}">Open</button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- pager -->
+    <div class="d-flex justify-content-between mt-3">
+      <div class="small-muted">Page {{ page }} / {{ total_pages }}</div>
+      <div>
+        <a class="btn btn-sm btn-outline-secondary"
+          href="{{ url_for('employee.partner_orders', page=(page-1 if page>1 else 1), search=search, partner_id=filter_partner_id, status=filter_status, payment_status=filter_payment_status, employee_id=filter_employee_id, date_from=date_from, date_to=date_to) }}">Prev</a>
+        <a class="btn btn-sm btn-primary"
+          href="{{ url_for('employee.partner_orders', page=(page+1 if page<total_pages else total_pages), search=search, partner_id=filter_partner_id, status=filter_status, payment_status=filter_payment_status, employee_id=filter_employee_id, date_from=date_from, date_to=date_to) }}">Next</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT ORDER / PAYMENTS MODAL -->
+<div class="modal fade" id="editOrderModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <form id="editOrderForm" class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Edit Order</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="edit_order_id" name="order_id">
+        <div class="row g-2 mb-2">
+          <div class="col-md-4">
+            <label class="form-label small">Order</label>
+            <input id="edit_order_display_id" class="form-control form-control-sm" readonly>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label small">Partner</label>
+            <input id="edit_partner_display" class="form-control form-control-sm" readonly>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label small">Client</label>
+            <select id="edit_client_id" name="client_id" class="form-select form-select-sm">
+              <option value="">Select client</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="mb-2">
+          <label class="form-label small">Work Title</label>
+          <input name="work_title" id="edit_work_title" class="form-control form-control-sm">
+        </div>
+        <div class="mb-2">
+          <label class="form-label small">Description</label>
+          <textarea name="description" id="edit_description" class="form-control form-control-sm" rows="3"></textarea>
+        </div>
+
+        <hr>
+
+        <div class="row g-2 mb-2">
+          <div class="col-md-6">
+            <label class="form-label small">Assigned Employee</label>
+            <select name="assigned_employee_id" id="edit_assigned_employee_id" class="form-select form-select-sm">
+              <option value="">Unassigned</option>
+              {% for eid, e in employees_map.items() %}
+              <option value="{{ eid }}">{{ e.name or 'Unknown' }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label small">Status</label>
+            <select name="status" id="edit_status" class="form-select form-select-sm">
+              <option value="pending">Pending</option>
+              <option value="in_progress">In Progress</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+              <option value="pending_payment">Pending Payment</option>
+            </select>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label small">ETA</label>
+          <input type="date" name="eta" id="edit_eta" class="form-control form-control-sm">
+        </div>
+        <hr><br>
+
+        <!-- Billing -->
+        <div class="mb-2">
+          <h6 class="small">Billing</h6>
+          <div class="row g-2">
+            <div class="col-md-4">
+              <label class="form-label small">Amount Total</label>
+              <input name="amount_total" id="edit_amount_total" type="number" step="0.01" min="0"
+                class="form-control form-control-sm">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small">Amount Paid</label>
+              <input id="edit_amount_paid" class="form-control form-control-sm" readonly>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small">Amount Due</label>
+              <input id="edit_amount_due" class="form-control form-control-sm" readonly>
+            </div>
+          </div>
+
+          <!-- FIXED: Enhanced wallet balance display with real-time validation -->
+          <div class="mt-2">
+            <div class="small-muted">Wallet balance: <span id="wallet_balance_label">₹0</span></div>
+            <div id="wallet_balance_status" class="wallet-balance-display"></div>
+          </div>
+
+          <!-- Add payment -->
+          <div class="border rounded p-2 mt-2">
+            <div class="d-flex justify-content-between mb-2">
+              <div class="fw-semibold small">Add Payment</div>
+            </div>
+
+            <div class="row g-2 align-items-end">
+              <div class="col-md-3">
+                <label class="form-label small">Amount</label>
+                <input type="number" name="new_payment_amount" id="new_payment_amount" step="0.01"
+                  class="form-control form-control-sm">
+                <!-- FIXED: Wallet validation warning message -->
+                <div id="wallet_warning" class="wallet-warning">Amount exceeds wallet balance!</div>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label small">Mode</label>
+                <select name="new_payment_mode" id="new_payment_mode" class="form-select form-select-sm">
+                  <option value="">No payment</option>
+                  <option value="wallet">Wallet</option>
+                  <option value="direct">Direct</option>
+                </select>
+                <div id="wallet_info" class="small-muted d-none">Using wallet. Will debit partner wallet.</div>
+              </div>
+              <div class="col-md-3 direct-only d-none">
+                <label class="form-label small">Transaction #</label>
+                <input name="new_payment_transaction_number" id="new_payment_transaction_number"
+                  class="form-control form-control-sm">
+              </div>
+              <div class="col-md-3 direct-only d-none">
+                <label class="form-label small">Payment Date</label>
+                <input type="date" name="new_payment_date" id="new_payment_date" class="form-control form-control-sm">
+              </div>
+            </div>
+
+            <!-- FIXED: Added "Add Payment" button for better UX -->
+            <div class="mt-2">
+              <button type="button" class="btn btn-sm btn-success" id="addPaymentBtn">
+                <i class="bi bi-plus-circle"></i> Add Payment
+              </button>
+            </div>
+          </div>
+
+          <!-- payments history -->
+          <div class="mt-3">
+            <div class="d-flex justify-content-end mb-2">
+              <button type="button" class="btn btn-sm btn-warning" id="manualRefundBtn">
+                Manual Refund
+              </button>
+            </div>
+            <h6 class="small">Payment History</h6>
+            <div class="payments-table border rounded p-1">
+              <table class="table table-sm mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th>Date</th>
+                    <th>Mode</th>
+                    <th>Amt</th>
+                    <th>Bill #</th>
+                    <th>Txn #</th>
+                    <th>By</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="payments_table_body">
+                  <!-- filled by JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <hr>
+        <div class="mb-2">
+          <label class="form-label small">Internal comments</label>
+          <textarea name="internal_comments" id="edit_internal_comments" class="form-control form-control-sm"
+            rows="2"></textarea>
+        </div>
+        <small class="small-muted" id="filesCountText">No files attached</small>
+
+        <a id="downloadFilesBtn" href="#" target="_blank" class="btn btn-sm btn-outline-secondary d-none">
+          <i class="bi bi-download"></i> Download All
+        </a>
+
+
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-sm btn-primary">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- TOPUP MODAL -->
+<div class="modal fade" id="topupModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <form id="topupForm" class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Wallet Topup</h5><button type="button" class="btn-close"
+          data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-2">
+          <label class="form-label small">Partner</label>
+          <select id="topup_partner" name="partner_id" class="form-select form-select-sm">
+            <option value="">Select partner</option>
+            {% for pid, p in partners_map.items() %}
+            <option value="{{ pid }}">{{ p.name or pid }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="mb-2">
+          <label class="form-label small">Amount</label>
+          <input type="number" name="amount" step="0.01" min="0" class="form-control form-control-sm" id="topup_amount">
+        </div>
+        <div class="small-muted">Topup creates a wallet credit. No invoice is generated for topups.</div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-sm btn-primary">Topup</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+<div class="modal fade" id="txnActionModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <input type="hidden" id="refund_partner_id" name="partner_id">
+    <div id="txnActionContent" class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="txnActionTitle">Action</h5><button type="button" class="btn-close"
+          data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="txn_action_id">
+
+        <!-- Invalidate section -->
+        <div id="invalidate_section">
+          <div class="mb-2">
+            <label class="form-label small">Reason</label>
+            <input id="invalidate_reason" class="form-control form-control-sm" name="reason"
+              placeholder="Why invalidate?">
+          </div>
+          <div class="small-muted">Invalidated transactions will be excluded from paid calculations and won't be
+            invoiced.</div>
+        </div>
+
+        <!-- Refund section -->
+        <div id="refund_section" style="display:none;">
+          <div class="mb-2 refund-box">
+            <label class="form-label small">Refund Amount</label>
+            <input id="refund_amount" name="amount" class="form-control form-control-sm" step="0.01" type="number">
+          </div>
+
+          <div class="mb-2">
+            <label class="form-label small">Refund target</label>
+            <select id="refund_to_wallet" name="refund_to_wallet" class="form-select form-select-sm">
+              <option value="1">Credit partner wallet</option>
+              <option value="0">Processed externally (no wallet credit)</option>
+            </select>
+          </div>
+
+          <div class="mb-2">
+            <label class="form-label small">Reason</label>
+            <input id="refund_reason" name="reason" class="form-control form-control-sm"
+              placeholder="Refund note / reason">
+          </div>
+
+          <div class="small-muted">Refund will create a refund transaction. If 'credit wallet' is chosen, partner wallet
+            will increase.</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-sm btn-danger d-none" id="txnInvalidateSubmit">Invalidate</button>
+        <button type="button" class="btn btn-sm btn-warning d-none" id="txnRefundSubmit">Refund</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- INVOICE MODAL -->
+<div class="modal fade" id="invoiceModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <form id="invoiceForm" class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Generate Invoice</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <div class="row g-2 mb-3">
+          <div class="col-md-4">
+            <label class="form-label small">Total Paid (Locked)</label>
+            <input id="invoice_paid_amount" class="form-control form-control-sm" readonly>
+          </div>
+        </div>
+
+        <!-- FEES -->
+        <div class="row g-2 mb-3">
+          <div class="col-md-4">
+            <label class="form-label small">Government Fee</label>
+            <input type="number" step="0.01" id="gov_fee" class="form-control form-control-sm" value="0">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label small">Out of Pocket Expenses</label>
+            <input type="number" step="0.01" id="oop_fee" class="form-control form-control-sm" value="0">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label small">Service Fee (Auto)</label>
+            <input type="number" id="service_fee_total" class="form-control form-control-sm" readonly>
+          </div>
+        </div>
+
+        <!-- SERVICES -->
+        <h6 class="small">Services</h6>
+        <table class="table table-sm">
+          <thead>
+            <tr>
+              <th>Service</th>
+              <th>HSN</th>
+              <th>Amount</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="servicesBody"></tbody>
+        </table>
+
+        <button type="button" class="btn btn-sm btn-outline-primary" id="addServiceRow">
+          + Add Service
+        </button>
+
+        <hr>
+
+        <!-- GST -->
+        <div class="row g-2">
+          <div class="col-md-3">
+            <label class="form-label small">CGST</label>
+            <input id="cgst_amt" class="form-control form-control-sm" readonly>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label small">SGST</label>
+            <input id="sgst_amt" class="form-control form-control-sm" readonly>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label small">IGST</label>
+            <input id="igst_amt" class="form-control form-control-sm" readonly>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label small">Grand Total</label>
+            <input id="grand_total" class="form-control form-control-sm" readonly>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">
+          Cancel
+        </button>
+        <button type="submit" class="btn btn-sm btn-success">
+          Save Invoice & Complete Order
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+ 
+  let currentOrder = null;
+  let invoiceCompleted = false;
+  let invoiceModal;
+  let servicesMaster = [];
+  let txnModalInstance = null;
+  let editOrderModalInstance = null; 
+  let SERVICE_BASE_TOTAL = 0;
+
+
+  function updateAttachmentsUI(o) {
+    const files = Array.isArray(o.attachments)
+      ? o.attachments.filter(f => f.gcs_path)
+      : [];
+
+    const filesText = document.getElementById('filesCountText');
+    const downloadBtn = document.getElementById('downloadFilesBtn');
+
+    if (!filesText || !downloadBtn) return;
+
+    if (files.length > 0) {
+      filesText.textContent = `${files.length} files attached`;
+      downloadBtn.classList.remove('d-none');
+      downloadBtn.href = `/employee/partner-orders/${o.id}/download-files`;
+    } else {
+      filesText.textContent = `No files attached`;
+      downloadBtn.classList.add('d-none');
+    }
+  }
+
+  const userRole = "{{ user.role }}";   // employee | employee
+
+
+  const loaderOverlay = document.getElementById('loaderOverlay');
+  const paymentsTableBody = document.getElementById('payments_table_body');
+  const walletBalanceLabel = document.getElementById('wallet_balance_label');
+  const walletInfo = document.getElementById('wallet_info');
+  const newPaymentMode = document.getElementById('new_payment_mode');
+  const newPaymentAmount = document.getElementById('new_payment_amount');
+  const txnModalEl = document.getElementById('txnActionModal');
+  const walletWarning = document.getElementById('wallet_warning');
+  const walletBalanceStatus = document.getElementById('wallet_balance_status');
+
+  const GST_RATE = 0.18;
+
+  
+  document.addEventListener('DOMContentLoaded', function () {
+   
+    newPaymentMode?.addEventListener('change', togglePaymentFields);
+
+    newPaymentAmount?.addEventListener('input', validateWalletAmount);
+
+ 
+    initializeFormListeners();
+
+    
+    displayFlashMessages();
+  });
+
+  document.getElementById('editOrderModal')?.addEventListener('hidden.bs.modal', function () {
+    location.reload();
+  });
+
+  function displayFlashMessages() {
+
+    const flashContainer = document.querySelector('.flash-messages');
+    if (flashContainer && flashContainer.children.length > 0) {
+      flashContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  
+
+  
+  function showLoader(show = true) {
+    loaderOverlay.style.display = show ? 'flex' : 'none';
+  }
+
+ 
+  function partnerDisplayName(o) {
+    return o.partner_name || o.partner?.name || o.partner_id || '';
+  }
+
+  
+  function revertStatusIfInvoiceCancelled() {
+    document.getElementById('edit_status').value = 'in_progress';
+  }
+
+
+  function ensureTxnModal() {
+    if (!txnModalInstance) {
+      txnModalInstance = new bootstrap.Modal(txnModalEl, {
+        backdrop: 'static',
+        keyboard: false
+      });
+    }
+    return txnModalInstance;
+  }
+
+ 
+  function ensureEditOrderModal() {
+    if (!editOrderModalInstance) {
+      const modalEl = document.getElementById('editOrderModal');
+      editOrderModalInstance = new bootstrap.Modal(modalEl, {
+        backdrop: 'static',
+        keyboard: false
+      });
+    }
+    return editOrderModalInstance;
+  }
+
+
+  function togglePaymentFields() {
+    const mode = newPaymentMode?.value || '';
+    const directEls = document.querySelectorAll('.direct-only');
+
+    if (mode === 'direct') {
+      directEls.forEach(e => e.classList.remove('d-none'));
+      walletInfo?.classList.add('d-none');
+      
+      resetWalletValidation();
+    } else if (mode === 'wallet') {
+      directEls.forEach(e => e.classList.add('d-none'));
+      walletInfo?.classList.remove('d-none');
+      
+      validateWalletAmount();
+    } else {
+      directEls.forEach(e => e.classList.add('d-none'));
+      walletInfo?.classList.add('d-none');
+      resetWalletValidation();
+    }
+  }
+
+ 
+  function validateWalletAmount() {
+    const mode = newPaymentMode?.value || '';
+    const amount = parseFloat(newPaymentAmount?.value || 0);
+    const walletBalance = parseFloat(currentOrder?.partner_wallet_balance || 0);
+
+    
+    if (mode !== 'wallet') {
+      resetWalletValidation();
+      return true;
+    }
+
+   
+    if (amount > walletBalance) {
+     
+      walletWarning?.classList.add('show');
+      walletBalanceStatus.textContent = `Insufficient balance! You need ₹${amount} but only have ₹${walletBalance}`;
+      walletBalanceStatus.classList.remove('sufficient');
+      walletBalanceStatus.classList.add('insufficient');
+      return false;
+    } else if (amount > 0) {
+      
+      walletWarning?.classList.remove('show');
+      walletBalanceStatus.textContent = `Available balance: ₹${walletBalance}. After payment: ₹${(walletBalance - amount).toFixed(2)}`;
+      walletBalanceStatus.classList.remove('insufficient');
+      walletBalanceStatus.classList.add('sufficient');
+      return true;
+    } else {
+      
+      resetWalletValidation();
+      return true;
+    }
+  }
+
+
+  function resetWalletValidation() {
+    walletWarning?.classList.remove('show');
+    walletBalanceStatus.textContent = '';
+    walletBalanceStatus.classList.remove('insufficient', 'sufficient');
+  }
+
+
+  document.getElementById('addPaymentBtn')?.addEventListener('click', async function () {
+    const orderId = document.getElementById('edit_order_id').value;
+    const amount = document.getElementById('new_payment_amount').value;
+    const mode = document.getElementById('new_payment_mode').value;
+
+
+    if (!amount || parseFloat(amount) <= 0) {
+      alert('Please enter a valid payment amount');
+      return;
+    }
+
+    if (!mode) {
+      alert('Please select a payment mode');
+      return;
+    }
+
+   
+    if (mode === 'wallet' && !validateWalletAmount()) {
+      alert('Payment amount exceeds available wallet balance');
+      return;
+    }
+
+
+    const fd = new FormData();
+    fd.append('new_payment_amount', amount);
+    fd.append('new_payment_mode', mode);
+
+    if (mode === 'direct') {
+      const txnNum = document.getElementById('new_payment_transaction_number').value;
+      const payDate = document.getElementById('new_payment_date').value;
+
+      if (!txnNum) {
+        alert('Please enter transaction number for direct payment');
+        return;
+      }
+
+      fd.append('new_payment_transaction_number', txnNum);
+      fd.append('new_payment_date', payDate);
+    }
+
+
+    showLoader(true);
+
+    try {
+
+      const res = await fetch(`/employee/partner-orders/${orderId}/update`, {
+        method: 'POST',
+        body: fd
+      });
+
+      const j = await res.json();
+      showLoader(false);
+
+      if (j.success) {
+     
+        await refreshOrderData(orderId);
+
+       
+        document.getElementById('new_payment_amount').value = '';
+        document.getElementById('new_payment_mode').value = '';
+        document.getElementById('new_payment_transaction_number').value = '';
+        document.getElementById('new_payment_date').value = '';
+        togglePaymentFields();
+        resetWalletValidation();
+
+        
+        alert('Payment added successfully!');
+      } else {
+        alert(j.error || 'Failed to add payment');
+      }
+    } catch (err) {
+      showLoader(false);
+      console.error(err);
+      alert('Network error while adding payment');
+    }
+  });
+
+  
+  async function refreshOrderData(orderId) {
+    try {
+      const res = await fetch(`/employee/partner-orders/${orderId}`);
+      const j = await res.json();
+
+      if (!j.success) {
+        throw new Error('Failed to refresh order data');
+      }
+
+      const o = j.order;
+
+
+
+
+   
+      document.getElementById('edit_amount_paid').value = o.amount_paid ?? '';
+      document.getElementById('edit_amount_due').value = o.amount_due ?? '';
+
+      
+      walletBalanceLabel.textContent = "₹" + (o.partner_wallet_balance ?? 0);
+
+    
+      paymentsTableBody.innerHTML = '';
+      (o.payments || []).forEach(p => {
+        const tr = document.createElement('tr');
+
+        if (p.invalid) tr.classList.add('txn-invalid');
+
+        const date = p.payment_date || p.created_at || '-';
+        const mode = p.type === 'wallet' ? 'Wallet' :
+          p.type === 'direct' ? 'Direct' : '-';
+
+        let actionHtml = p.invalid
+          ? '<span class="small-muted">Invalid</span>'
+          : `
+        <button type="button" class="btn btn-sm btn-outline-danger btn-invalidate"
+                data-id="${p.id}">
+          Invalidate
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-warning btn-refund"
+                data-id="${p.id}"
+                data-amount="${p.amount}">
+          Refund
+        </button>
+      `;
+
+        tr.innerHTML = `
+    <td>${new Date(date).toLocaleString()}</td>
+    <td>${mode}</td>
+    <td>₹${Number(p.amount || 0).toFixed(2)}</td>
+    <td>${p.bill_number || '-'}</td>
+    <td>${p.transaction_number || '-'}</td>
+    <td>${p.created_by_name || '-'}</td>
+    <td>${actionHtml}</td>
+  `;
+
+        paymentsTableBody.appendChild(tr);
+      });
+
+      if (newPaymentMode.value === 'wallet') {
+        validateWalletAmount();
+      }
+
+    } catch (err) {
+      console.error('Error refreshing order data:', err);
+      throw err;
+    }
+  }
+
+  
+  function openInvalidateModal(txnId) {
+    ensureTxnModal();
+
+    document.getElementById('txnActionTitle').innerText = 'Mark transaction invalid';
+    document.getElementById('txn_action_id').value = txnId;
+
+    document.getElementById('invalidate_section').style.display = 'block';
+    document.getElementById('refund_section').style.display = 'none';
+
+    document.getElementById('txnInvalidateSubmit').classList.remove('d-none');
+    document.getElementById('txnRefundSubmit').classList.add('d-none');
+
+    document.getElementById('invalidate_reason').value = '';
+
+    document.getElementById('txnInvalidateSubmit').onclick = submitInvalidate;
+
+    txnModalInstance.show();
+  }
+
+  
+  async function submitInvalidate(e) {
+    e.preventDefault();
+
+    const txnId = document.getElementById('txn_action_id').value;
+    const reason = document.getElementById('invalidate_reason').value || 'Marked invalid';
+
+    if (!txnId) return alert('Transaction ID missing');
+
+    showLoader(true);
+
+    try {
+      const fd = new FormData();
+      fd.append('reason', reason);
+
+      const res = await fetch(`/employee/partner-transactions/${txnId}/invalidate`, {
+        method: 'POST',
+        body: fd
+      });
+
+      const j = await res.json();
+      showLoader(false);
+
+      if (j.success) {
+        alert('Transaction invalidated');
+        location.reload();
+      } else {
+        alert(j.error || 'Failed');
+      }
+    } catch (err) {
+      showLoader(false);
+      alert('Network error');
+    }
+  }
+
+
+  function openRefundModal(txnId, amount) {
+    ensureTxnModal();
+
+    document.getElementById('txnActionTitle').innerText = 'Refund transaction';
+    document.getElementById('txn_action_id').value = txnId;
+
+    document.getElementById('invalidate_section').style.display = 'none';
+    document.getElementById('refund_section').style.display = 'block';
+
+    document.getElementById('txnInvalidateSubmit').classList.add('d-none');
+    document.getElementById('txnRefundSubmit').classList.remove('d-none');
+
+    document.getElementById('refund_amount').value = amount || '';
+    document.getElementById('refund_reason').value = '';
+    document.getElementById('refund_to_wallet').value = '1';
+
+    document.getElementById('txnRefundSubmit').onclick = submitRefundUnified;
+
+    txnModalInstance.show();
+  }
+
+  /**
+   * FIXED: Submit refund (for both transaction refund and manual refund)
+   * Now properly handles order updates and refreshes
+   */
+  async function submitRefundUnified(e) {
+    e.preventDefault();
+
+    const txnId = document.getElementById('txn_action_id').value;
+    const amount = document.getElementById('refund_amount').value.trim();
+    const refund_to_wallet = document.getElementById('refund_to_wallet').value;
+    const reason = document.getElementById('refund_reason').value || 'Refunded';
+    const partner_id = document.getElementById('refund_partner_id').value;
+
+    // Validation
+    if (!partner_id) {
+      alert('Partner missing. Reopen order.');
+      return;
+    }
+
+    if (!amount || parseFloat(amount) <= 0) {
+      alert('Refund amount required and must be positive');
+      return;
+    }
+
+    // Determine endpoint based on whether this is a transaction refund or manual refund
+    const url = txnId
+      ? `/employee/partner-transactions/${txnId}/refund`
+      : `/employee/partner-transactions/manual-refund`;
+
+    if (!confirm(`Confirm refund of ₹${amount}?`)) return;
+
+    showLoader(true);
+
+    try {
+      const fd = new FormData();
+      fd.append('amount', amount);
+      fd.append('refund_to_wallet', refund_to_wallet);
+      fd.append('reason', reason);
+      fd.append('partner_id', partner_id);
+
+      // FIXED: Add order_id for manual refunds to properly update order
+      if (!txnId && currentOrder) {
+        fd.append('order_id', currentOrder.id);
+      }
+
+      const res = await fetch(url, { method: 'POST', body: fd });
+      const j = await res.json();
+      showLoader(false);
+
+      if (j.success) {
+        // Close refund modal
+        txnModalInstance.hide();
+
+        // FIXED: Refresh the order data to show updated amounts and transactions
+        if (currentOrder) {
+          await refreshOrderData(currentOrder.id);
+        }
+
+        alert('Refund processed successfully');
+      } else {
+        alert(j.error || 'Refund failed');
+      }
+    } catch (err) {
+      showLoader(false);
+      console.error(err);
+      alert('Network error');
+    }
+  }
+
+  // ====================================================================
+  // MANUAL REFUND BUTTON
+  // ====================================================================
+
+  /**
+   * Handle manual refund button click
+   */
+  document.getElementById('manualRefundBtn')?.addEventListener('click', () => {
+    ensureTxnModal();
+
+    document.getElementById('txnActionTitle').innerText = 'Manual Refund';
+    document.getElementById('txn_action_id').value = '';
+
+    document.getElementById('invalidate_section').style.display = 'none';
+    document.getElementById('refund_section').style.display = 'block';
+
+    document.getElementById('txnInvalidateSubmit').classList.add('d-none');
+    document.getElementById('txnRefundSubmit').classList.remove('d-none');
+
+    document.getElementById('refund_amount').value = '';
+    document.getElementById('refund_reason').value = '';
+    document.getElementById('refund_to_wallet').value = '1';
+
+    document.getElementById('txnRefundSubmit').onclick = submitRefundUnified;
+
+    txnModalInstance.show();
+  });
+
+  // ====================================================================
+  // ORDER MODAL - OPEN & POPULATE
+  // ====================================================================
+
+  /**
+   * Event delegation for edit order button clicks
+   */
+  document.addEventListener('click', async function (e) {
+    const btn = e.target.closest('.btn-edit-order');
+    if (!btn) return;
+
+    const orderId = btn.dataset.id;
+    if (!orderId) return;
+
+    showLoader(true);
+
+    try {
+      const res = await fetch(`/employee/partner-orders/${orderId}`);
+      const j = await res.json();
+      showLoader(false);
+
+      if (!j.success) {
+        alert('Failed to load order');
+        return;
+      }
+
+      const o = j.order;
+      currentOrder = o;
+      window.CURRENT_PARTNER_STATE = o.partner_state || "";
+      console.log(o.partner_state)
+      console.log('Hi')
+
+      // ================================
+      // SET ETA IN MODAL
+      // ================================
+      if (o.eta) {
+        const d = new Date(o.eta);
+        document.getElementById('edit_eta').value = d.toISOString().split('T')[0];
+      } else {
+        document.getElementById('edit_eta').value = '';
+      }
+
+      // 🔥 SHOW ATTACHMENTS WHEN MODAL OPENS
+      updateAttachmentsUI(o);
+
+
+      // Store partner ID for refund operations
+      document.getElementById('refund_partner_id').value = o.partner_id;
+
+      // Populate summary section
+      document.getElementById('edit_order_id').value = o.id || '';
+      document.getElementById('edit_order_display_id').value = o.order_number || o.id || '';
+      document.getElementById('edit_partner_display').value = partnerDisplayName(o);
+
+      // Load and populate clients dropdown
+      await loadClients(o.partner_id, o.client_id);
+
+      // Populate work details
+      document.getElementById('edit_work_title').value = o.work_title || '';
+      document.getElementById('edit_description').value = o.description || '';
+
+      // Populate assignment section
+      document.getElementById('edit_assigned_employee_id').value = o.assigned_employee_id || '';
+      document.getElementById('edit_status').value = o.status || 'pending';
+
+      // Populate billing section
+      document.getElementById('edit_amount_total').value = o.amount_total ?? '';
+      document.getElementById('edit_amount_paid').value = o.amount_paid ?? '';
+      document.getElementById('edit_amount_due').value = o.amount_due ?? '';
+
+      // Update wallet balance displays
+      walletBalanceLabel.textContent = "₹" + (o.partner_wallet_balance ?? 0);
+      if (walletInfo) {
+        walletInfo.textContent = `Wallet balance: ₹${o.partner_wallet_balance ?? 0}`;
+      }
+
+      // Reset payment input fields
+      document.getElementById('new_payment_amount').value = '';
+      document.getElementById('new_payment_mode').value = '';
+      document.getElementById('new_payment_transaction_number').value = '';
+      document.getElementById('new_payment_date').value = '';
+      togglePaymentFields();
+      resetWalletValidation();
+
+
+      paymentsTableBody.innerHTML = '';
+      (o.payments || []).forEach(p => {
+        const tr = document.createElement('tr');
+
+        if (p.invalid) tr.classList.add('txn-invalid');
+
+        const date = p.payment_date || p.created_at || '-';
+        const mode = p.type === 'wallet' ? 'Wallet' :
+          p.type === 'direct' ? 'Direct' : '-';
+
+        let actionHtml = p.invalid
+          ? '<span class="small-muted">Invalid</span>'
+          : `
+        <button type="button" class="btn btn-sm btn-outline-danger btn-invalidate"
+                data-id="${p.id}">
+          Invalidate
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-warning btn-refund"
+                data-id="${p.id}"
+                data-amount="${p.amount}">
+          Refund
+        </button>
+      `;
+
+        tr.innerHTML = `
+    <td>${new Date(date).toLocaleString()}</td>
+    <td>${mode}</td>
+    <td>₹${Number(p.amount || 0).toFixed(2)}</td>
+    <td>${p.bill_number || '-'}</td>
+    <td>${p.transaction_number || '-'}</td>
+    <td>${p.created_by_name || '-'}</td>
+    <td>${actionHtml}</td>
+  `;
+
+        paymentsTableBody.appendChild(tr);
+      });
+
+   
+      invoiceCompleted = false;
+
+      ensureEditOrderModal().show();
+
+    } catch (err) {
+      showLoader(false);
+      console.error(err);
+      alert('Network error');
+    }
+  });
+
+
+  document.getElementById('editOrderForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+
+    const status = edit_status.value;
+
+   
+    if (status === 'completed') {
+      if (currentOrder?.invoice_id) {
+        openInvoicePopup(true);
+      } else {
+        openInvoicePopup(false);
+      }
+      return;
+    }
+
+    
+    const orderId = edit_order_id.value;
+    const fd = new FormData(this);
+
+    showLoader(true);
+
+    try {
+      const res = await fetch(`/employee/partner-orders/${orderId}/update`, {
+        method: 'POST',
+        body: fd
+      });
+
+      const j = await res.json();
+      showLoader(false);
+
+      if (j.success) {
+        // FIXED: Refresh order data to show updated client name
+        await refreshOrderData(orderId);
+        alert('Saved successfully');
+        location.reload();
+      } else {
+        alert(j.error || 'Failed to update order');
+      }
+    } catch (err) {
+      showLoader(false);
+      console.error(err);
+      alert('Network error');
+    }
+  });
+
+
+  async function loadClients(partnerId, selectedClientId) {
+    try {
+      const res = await fetch(`/employee/partners/${partnerId}/clients`);
+      const j = await res.json();
+
+      const sel = document.getElementById('edit_client_id');
+      sel.innerHTML = '<option value="">Select client</option>';
+
+      j.clients.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.id;
+        opt.textContent = `${c.name} | ${c.phone}`;
+        if (c.id === selectedClientId) opt.selected = true;
+        sel.appendChild(opt);
+      });
+    } catch (err) {
+      console.error('Error loading clients:', err);
+    }
+  }
+
+
+  document.addEventListener('click', function (e) {
+    if (e.target.classList.contains('btn-invalidate')) {
+      openInvalidateModal(e.target.dataset.id);
+    }
+    if (e.target.classList.contains('btn-refund')) {
+      openRefundModal(e.target.dataset.id, e.target.dataset.amount);
+    }
+  });
+
+
+  document.addEventListener('click', async function (e) {
+    if (!e.target.classList.contains('btn-publish-invoice')) return;
+
+    if (!confirm('Publish invoice? Partner will be able to see it.')) return;
+
+    const txnId = e.target.dataset.id;
+    showLoader(true);
+
+    try {
+      await fetch(`/employee/partner-transactions/${txnId}/publish-invoice`, {
+        method: 'POST'
+      });
+      showLoader(false);
+      location.reload();
+    } catch (err) {
+      showLoader(false);
+      alert('Network error');
+    }
+  });
+
+
+  async function openInvoicePopup(editMode = false) {
+    resetInvoiceForm();
+    await loadServicesMaster();
+
+    if (editMode && currentOrder?.invoice) {
+      populateInvoiceForm(currentOrder.invoice);
+    }
+
+    if (!invoiceModal) {
+      invoiceModal = new bootstrap.Modal(document.getElementById('invoiceModal'), {
+        backdrop: 'static',
+        keyboard: false
+      });
+    }
+
+    const paid = Number(document.getElementById('edit_amount_paid').value || 0);
+    document.getElementById('invoice_paid_amount').value = paid.toFixed(2);
+    recalcInvoice();
+
+
+    invoiceModal.show();
+  }
+
+
+  function populateInvoiceForm(inv) {
+    gov_fee.value = inv.fees.government_fee || 0;
+    oop_fee.value = inv.fees.out_of_pocket || 0;
+
+    (inv.services || []).forEach(s => {
+      addServiceRow();
+      const row = document.querySelector('#servicesBody tr:last-child');
+      const sel = row.querySelector('.service-select');
+
+      sel.value = s.service_id;
+      sel.dispatchEvent(new Event('change'));
+
+      row.querySelector('.svc-amt').value = s.base_amount;
+    });
+
+    document.getElementById('cgst_amt').value = (inv.taxes?.cgst ?? 0).toFixed(2);
+    document.getElementById('sgst_amt').value = (inv.taxes?.sgst ?? 0).toFixed(2);
+    document.getElementById('igst_amt').value = (inv.taxes?.igst ?? 0).toFixed(2);
+
+    document.getElementById('service_fee_total').value = (inv.totals?.service_base ?? 0).toFixed(2);
+    document.getElementById('grand_total').value = (inv.totals?.grand_total ?? 0).toFixed(2);
+
+    recalcInvoice();
+  }
+
+  
+  function resetInvoiceForm() {
+    SERVICE_BASE_TOTAL = 0;
+    document.getElementById('servicesBody').innerHTML = '';
+    document.getElementById('gov_fee').value = 0;
+    document.getElementById('oop_fee').value = 0;
+    recalcInvoice();
+  }
+
+ 
+  async function loadServicesMaster() {
+    if (servicesMaster.length) return;
+
+    const res = await fetch('/employee/services-master');
+    const j = await res.json();
+    servicesMaster = j.services || [];
+  }
+
+
+  function addServiceRow() {
+    const tr = document.createElement('tr');
+
+    const serviceOptions = servicesMaster.map(s =>
+      `<option value="${s.id}" data-hsn="${s.hsn}" data-name="${s.name}">
+        ${s.name}
+      </option>`
+    ).join('');
+
+    tr.innerHTML = `
+    <td>
+      <select class="form-select form-select-sm service-select">
+        <option value="">Select</option>
+        ${serviceOptions}
+      </select>
+    </td>
+    <td><input class="form-control form-control-sm hsn" readonly></td>
+    <td><input type="number" step="0.01" class="form-control form-control-sm svc-amt"></td>
+    <td>
+      <button type="button" class="btn btn-sm btn-outline-danger remove-row">✕</button>
+    </td>
+  `;
+
+    document.getElementById('servicesBody').appendChild(tr);
+
+    const sel = tr.querySelector('.service-select');
+    sel.addEventListener('change', () => {
+      const opt = sel.selectedOptions[0];
+      tr.querySelector('.hsn').value = opt?.dataset?.hsn || '';
+    });
+
+   
+    let used = 0;
+    document.querySelectorAll('.svc-amt').forEach((i, idx, arr) => {
+  if (idx < arr.length - 1) {
+    used += Number(i.value || 0);
+  }
+});
+
+
+    const remaining = Math.max(SERVICE_BASE_TOTAL - used, 0);
+    const lastRow = document.querySelector('#servicesBody tr:last-child');
+    if (lastRow) {
+      lastRow.querySelector('.svc-amt').value = remaining.toFixed(2);
+    }
+
+  }
+
+
+  function initializeFormListeners() {
+    document.getElementById('addServiceRow').onclick = addServiceRow;
+
+    document.addEventListener('change', e => {
+      if (e.target.classList.contains('service-select')) {
+        const opt = e.target.selectedOptions[0];
+        e.target.closest('tr').querySelector('.hsn').value = opt.dataset.hsn || '';
+      }
+    });
+
+    document.addEventListener('input', e => {
+      if (e.target.classList.contains('svc-amt')) recalcInvoice();
+    });
+
+    document.addEventListener('click', e => {
+      if (e.target.classList.contains('remove-row')) {
+        e.target.closest('tr').remove();
+        recalcInvoice();
+      }
+    });
+
+    document.getElementById('invoiceForm').addEventListener('submit', submitInvoice);
+
+    document.getElementById('invoiceModal')
+      .addEventListener('hidden.bs.modal', () => {
+        if (!invoiceCompleted) {
+          document.getElementById('edit_status').value = 'in_progress';
+        }
+      });
+  }
+
+
+  function recalcInvoice() {
+    const paid = Number(document.getElementById('invoice_paid_amount').value || 0);
+    const gov = Number(document.getElementById('gov_fee').value || 0);
+    const oop = Number(document.getElementById('oop_fee').value || 0);
+
+    if (paid <= 0) {
+      document.getElementById('service_fee_total').value = '0.00';
+      document.getElementById('cgst_amt').value = '0.00';
+      document.getElementById('sgst_amt').value = '0.00';
+      document.getElementById('igst_amt').value = '0.00';
+      document.getElementById('grand_total').value = '0.00';
+      return;
+    }
+
+    let remaining = paid - gov - oop;
+
+    if (remaining < 0) {
+      alert("Government + OOP exceed paid amount");
+      return;
+    }
+
+    const serviceBase = remaining / (1 + GST_RATE);
+    SERVICE_BASE_TOTAL = Number(serviceBase.toFixed(2));
+    const gstTotal = remaining - serviceBase;
+
+    document.getElementById('service_fee_total').value = serviceBase.toFixed(2);
+    const partnerState = (window.CURRENT_PARTNER_STATE || "").toLowerCase();
+
+    let cgst = 0, sgst = 0, igst = 0;
+    const state = (partnerState || "").toLowerCase();
+    const stateInput = state.toLowerCase().trim();
+
+    const isPunjab =
+      stateInput === "punjab" ||
+      stateInput === "pb" ||
+      stateInput.startsWith("pun") ||   // pun, pan (common typo)
+      stateInput.startsWith("pan") ||   // pun, pan (common typo)
+      stateInput.includes("punjab");
+
+    if (isPunjab) {
+      cgst = gstTotal / 2;
+      sgst = gstTotal / 2;
+      igst = 0;
+    } else {
+      cgst = 0;
+      sgst = 0;
+      igst = gstTotal;
+    }
+
+
+    document.getElementById('cgst_amt').value = cgst.toFixed(2);
+    document.getElementById('sgst_amt').value = sgst.toFixed(2);
+    document.getElementById('igst_amt').value = igst.toFixed(2);
+
+    document.getElementById('grand_total').value = paid.toFixed(2);
+
+  }
+
+ 
+  async function submitInvoice(e) {
+    e.preventDefault();
+
+    const orderId = document.getElementById('edit_order_id').value;
+    if (!orderId) return;
+
+    const paid = Number(document.getElementById('invoice_paid_amount').value || 0);
+    const grandTotal = Number(document.getElementById('grand_total').value || 0);
+
+    if (Math.abs(grandTotal - paid) > 0.01) {
+      alert("Invoice total must exactly match paid amount");
+      return;
+    }
+
+    const services = [];
+    document.querySelectorAll('#servicesBody tr').forEach(tr => {
+      const sel = tr.querySelector('.service-select');
+      const amt = tr.querySelector('.svc-amt').value;
+
+      if (sel.value && amt) {
+        services.push({
+          service_id: sel.value,
+          service_name: sel.selectedOptions[0].text,
+          hsn: tr.querySelector('.hsn').value,
+          amount: Number(amt)
+        });
+      }
+    });
+
+    if (!services.length) {
+      alert('Add at least one service');
+      return;
+    }
+
+    let svcSum = 0;
+    services.forEach(s => svcSum += Number(s.amount || 0));
+
+    if (Math.abs(svcSum - SERVICE_BASE_TOTAL) > 0.01) {
+      alert(`Service total must be exactly ₹${SERVICE_BASE_TOTAL}`);
+      return;
+    }
+
+
+    showLoader(true);
+
+    await fetch(`/employee/partner-orders/${orderId}/generate-invoice`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        government_fee: Number(gov_fee.value),
+        out_of_pocket: Number(oop_fee.value),
+        services
+      })
+    });
+
+    invoiceCompleted = true;
+    window.location.href = "/employee/partner-orders";
+  }
+
+
+</script>
+
+{% endblock %}

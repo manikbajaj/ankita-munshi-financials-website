@@ -1,0 +1,29 @@
+<div class="sidebar">
+
+  <a href="{{ url_for('employee_sales.dashboard') }}" class="nav-link {% if active_tab=='dashboard' %}active{% endif %}">
+  <i class="bi bi-speedometer2"></i> Dashboard
+  </a>
+  
+  <a href="{{ url_for('employee_sales.create_order_page') }}" class="nav-link {% if active_tab=='create_order' %}active{% endif %}">
+  <i class="bi bi-plus-circle"></i> Create Order
+  </a>
+  
+  <a href="{{ url_for('employee_sales.partners_page') }}" class="nav-link {% if active_tab=='partners' %}active{% endif %}">
+  <i class="bi bi-people"></i> Partners
+  </a>
+  
+  <hr>
+  
+  <button class="btn btn-sm btn-light w-100" data-bs-toggle="modal" data-bs-target="#addPartnerModal">
+  <i class="bi bi-person-plus"></i> Add Partner
+  </button>
+
+  <hr>
+
+<a href="{{ url_for('employee_sales.logout') }}" class="btn btn-sm btn-outline-danger w-100">
+  <i class="bi bi-box-arrow-right"></i> Logout
+</a>
+
+  
+  </div>
+  

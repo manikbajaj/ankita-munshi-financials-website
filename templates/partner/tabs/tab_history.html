@@ -1,0 +1,137 @@
+<div class="profile-box">
+
+
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <h5 class="mb-0">Order History</h5>
+      <small class="text-muted">
+        {{ history_rows|length }} completed orders
+      </small>
+    </div>
+  
+ 
+    <form method="get" class="row g-2 mb-3">
+      <input type="hidden" name="tab" value="history">
+  
+      <div class="col-md-3">
+        <input
+          type="text"
+          name="order_no"
+          class="form-control"
+          placeholder="Order No"
+          value="{{ request.args.get('order_no','') }}"
+        >
+      </div>
+  
+      <div class="col-md-3">
+        <select name="payment_mode" class="form-select">
+          <option value="">All Payments</option>
+          <option value="Wallet"
+            {% if request.args.get('payment_mode') == 'Wallet' %}selected{% endif %}
+          >Wallet</option>
+          <option value="Direct"
+            {% if request.args.get('payment_mode') == 'Direct' %}selected{% endif %}
+          >Direct</option>
+          <option value="Mixed"
+            {% if request.args.get('payment_mode') == 'Mixed' %}selected{% endif %}
+          >Mixed</option>
+        </select>
+      </div>
+  
+      <div class="col-md-2">
+        <input
+          type="date"
+          name="from"
+          class="form-control"
+          value="{{ request.args.get('from','') }}"
+        >
+      </div>
+  
+      <div class="col-md-2">
+        <input
+          type="date"
+          name="to"
+          class="form-control"
+          value="{{ request.args.get('to','') }}"
+        >
+      </div>
+  
+      <div class="col-md-2">
+        <button class="btn btn-primary w-100">
+          Apply
+        </button>
+      </div>
+    </form>
+
+    {% if history_rows %}
+    <div class="table-responsive">
+      <table class="table table-sm align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Order No</th>
+            <th>Work Title</th>
+            <th>Client</th>
+            <th>Completed On</th>
+            <th class="text-end">Amount</th>
+            <th>Invoice #</th>
+            <th>Payment</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+  
+        <tbody>
+          {% for row in history_rows %}
+          <tr>
+            <td>{{ row.order_number }}</td>
+  
+            <td class="text-truncate" style="max-width:220px">
+              {{ row.work_title }}
+            </td>
+  
+            <td>{{ row.client_name or '—' }}</td>
+  
+            <td>
+              {{ row.invoice_date.strftime('%d %b %Y') }}
+            </td>
+  
+            <td class="text-end">
+              ₹{{ "%.2f"|format(row.amount) }}
+            </td>
+  
+            <td>
+              <span class="badge bg-light text-dark">
+                {{ row.invoice_number }}
+              </span>
+            </td>
+  
+            <td>
+              {% if row.payment_mode == 'Wallet' %}
+                <span class="badge bg-info">Wallet</span>
+              {% elif row.payment_mode == 'Direct' %}
+                <span class="badge bg-success">Direct</span>
+              {% else %}
+                <span class="badge bg-warning text-dark">Mixed</span>
+              {% endif %}
+            </td>
+  
+            <td class="text-end">
+              <a
+              href="/partner/invoice/{{ row.invoice_number }}/download"
+              class="btn btn-sm btn-outline-primary"
+            >
+              Download
+            </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  
+    {% else %}
+    <div class="text-center text-muted py-4">
+      No completed orders yet.
+    </div>
+    {% endif %}
+  
+  </div>
+  

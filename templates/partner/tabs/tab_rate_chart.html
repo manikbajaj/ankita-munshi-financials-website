@@ -1,0 +1,31 @@
+<div class="card shadow-sm">
+  <!-- ================= HEADER ================= -->
+  <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
+    <span>Rate Chart</span>
+
+    {% if rate_chart_pdf %}
+      <a href="{{ rate_chart_pdf }}"
+         class="btn btn-sm btn-outline-primary"
+         target="_blank"
+         download>
+        <i class="bi bi-download me-1"></i> Download
+      </a>
+    {% endif %}
+  </div>
+
+  <!-- ================= BODY ================= -->
+  <div class="card-body p-0" style="height:80vh;">
+    {% if rate_chart_pdf %}
+      <iframe
+        src="{{ rate_chart_pdf }}"
+        style="width:100%; height:100%; border:none;"
+        loading="lazy"
+        referrerpolicy="no-referrer">
+      </iframe>
+    {% else %}
+      <div class="h-100 d-flex align-items-center justify-content-center text-muted">
+        Rate chart not uploaded yet.
+      </div>
+    {% endif %}
+  </div>
+</div>

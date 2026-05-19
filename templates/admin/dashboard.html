@@ -1,0 +1,652 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
+<style>
+  body { background: #f3f5f7; }
+
+  .layout {
+    display: flex;
+    width: 100%;
+  }
+
+  .sidebar {
+    width: 240px;
+    min-width: 240px;
+    background: #0b1220;
+    color: #e6eef8;
+    min-height: calc(100vh - 80px);
+    padding: 22px;
+    position: sticky;
+    top: 80px;
+  }
+
+  .main {
+    width: calc(100% - 240px);
+    padding: 28px;
+  }
+
+  .sidebar .nav-link {
+    display: block;
+    padding: 8px 10px;
+    border-radius: 6px;
+    color: #cbd5f5;
+    text-decoration: none;
+    font-size: 14px;
+    margin-bottom: 4px;
+  }
+
+  .sidebar .nav-link.active,
+  .sidebar .nav-link:hover {
+    background: #12233b;
+    color: #fff;
+  }
+
+  .stat-card {
+    background: white;
+    padding: 14px 18px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    flex: 1;
+  }
+
+  .table thead th {
+    position: sticky;
+    top: 0;
+    background: white;
+    z-index: 10;
+  }
+
+  .filters {
+    background: white;
+    padding: 12px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  }
+
+  .status-badge {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .badge-active { background: #d1fae5; color: #065f46; }
+  .badge-inactive { background: #fee2e2; color: #991b1b; }
+  .badge-pending { background: #fef9c3; color: #92400e; }
+
+  tr:hover { background: #f9fafb !important; }
+</style>
+
+<div class="layout">
+  {% include "admin/_sidebar.html" %}
+  <!-- MAIN -->
+  <div class="main container-fluid">
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-start">
+      <div>
+        <h3 class="mb-1">Admin Dashboard</h3>
+        <div class="text-muted small">{{ user.email }}</div>
+      </div>
+
+      <div>
+        {# ================= RATE CHART TAB ================= #}
+        {% if active_tab == 'rate_chart' %}
+          {% include "partner/tab_rate_chart.html" %}
+        {% endif %}
+    
+        {# ================= REST OF DASHBOARD ================= #}
+        {% if active_tab == 'partners' %}
+        <a href="/admin/partners/export/excel" class="btn btn-success">
+          <i class="bi bi-file-earmark-excel-fill me-1"></i> Export Partners
+        </a>
+        {% endif %}
+
+        {% if active_tab == 'employees' %}
+        <a href="/admin/employees/export/excel" class="btn btn-success">
+          <i class="bi bi-file-earmark-excel-fill me-1"></i> Export Employees
+        </a>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="d-flex gap-3 mt-3">
+
+      {% if active_tab == 'partners' %}
+      <div class="stat-card">
+        <div class="stat-value">{{ total_partners }}</div>
+        <div class="stat-label">Total Partners</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">{{ active_count }}</div>
+        <div class="stat-label">Active Partners</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">{{ inactive_count }}</div>
+        <div class="stat-label">Inactive/Pending Partners</div>
+      </div>
+      {% endif %}
+
+      {% if active_tab == 'employees' %}
+      <div class="stat-card">
+        <div class="stat-value">{{ total_employees }}</div>
+        <div class="stat-label">Total Employees</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">{{ active_count }}</div>
+        <div class="stat-label">Active Employees</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">{{ inactive_count }}</div>
+        <div class="stat-label">Inactive Employees</div>
+      </div>
+      {% endif %}
+
+    </div>
+
+    <!-- SEARCH + TABS -->
+    <div class="d-flex justify-content-between align-items-center mt-3">
+      <form method="get" class="d-flex gap-2">
+        <input type="hidden" name="tab" value="{{ active_tab }}">
+        <input class="form-control" name="search" placeholder="Search..." value="{{ search }}">
+        <button class="btn btn-primary">Search</button>
+
+        {% if active_tab == 'employees' %}
+        <a href="/admin/dashboard?tab=employees" class="btn btn-outline-secondary">Clear</a>
+        {% endif %}
+      </form>
+
+      <div class="d-flex gap-2">
+        <a href="?tab=partners"
+           class="btn {% if active_tab=='partners' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+          Partner Management
+        </a>
+
+        <a href="?tab=employees"
+           class="btn {% if active_tab=='employees' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+          Employee Management
+        </a>
+      </div>
+    </div>
+
+    <!-- FILTERS (partners only) -->
+    {% if active_tab == 'partners' %}
+    <p class="mt-3 mb-1">
+      <a class="btn btn-outline-secondary btn-sm" data-bs-toggle="collapse" href="#filterBox">Filters</a>
+    </p>
+
+    <div class="collapse show" id="filterBox">
+      <div class="filters">
+        <form class="row g-2" method="get">
+          <input type="hidden" name="tab" value="partners">
+
+          <div class="col-md-2">
+            <input class="form-control" name="city" placeholder="City"
+                   value="{{ request.args.get('city','') }}">
+          </div>
+
+          <div class="col-md-2">
+            <input class="form-control" name="partner_code" placeholder="Partner Code"
+                   value="{{ request.args.get('partner_code','') }}">
+          </div>
+
+          <div class="col-md-2">
+            <select class="form-select" name="status">
+              <option value="">Any status</option>
+              <option value="active" {% if request.args.get('status')=='active' %}selected{% endif %}>Active</option>
+              <option value="inactive" {% if request.args.get('status')=='inactive' %}selected{% endif %}>Inactive</option>
+              <option value="pending" {% if request.args.get('status')=='pending' %}selected{% endif %}>Pending</option>
+            </select>
+          </div>
+
+          <div class="col-md-2">
+            <input class="form-control" name="profession" placeholder="Profession"
+                   value="{{ request.args.get('profession','') }}">
+          </div>
+
+          <div class="col-md-2">
+            <input class="form-control" name="email" placeholder="Email contains"
+                   value="{{ request.args.get('email','') }}">
+          </div>
+
+          <div class="col-md-2">
+            <input class="form-control" name="phone" placeholder="Phone contains"
+                   value="{{ request.args.get('phone','') }}">
+          </div>
+
+          <div class="col-md-2">
+            <button class="btn btn-primary w-100">Apply</button>
+          </div>
+
+          <div class="col-md-2">
+            <a href="/admin/dashboard?tab=partners"
+               class="btn btn-outline-secondary w-100">Reset</a>
+          </div>
+
+        </form>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- TABLES -->
+    <div class="table-responsive mt-3">
+
+      {% if active_tab == 'partners' %}
+      <table class="table table-hover align-middle bg-white">
+        <thead class="table-light">
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>City</th>
+            <th>Partner Code</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+
+        <tbody>
+        {% for p in partners %}
+          <tr>
+            <td>{{ p.name or '-' }}</td>
+            <td>{{ p.email or '-' }}</td>
+            <td>{{ p.phone or '-' }}</td>
+            <td>{{ p.city or '-' }}</td>
+            <td>{{ p.partner_code or '-' }}</td>
+
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <input type="checkbox"
+                       class="d-none partner-toggle"
+                       data-id="{{ p.id }}"
+                       {% if p.status=='active' %}checked{% endif %}>
+
+                {% if p.status == 'active' %}
+                <span class="status-badge badge-active status-click" data-id="{{ p.id }}">Active</span>
+                {% elif p.status == 'inactive' %}
+                <span class="status-badge badge-inactive status-click" data-id="{{ p.id }}">Inactive</span>
+                {% else %}
+                <span class="status-badge badge-pending status-click" data-id="{{ p.id }}">Pending</span>
+                {% endif %}
+              </div>
+            </td>
+
+            <td>
+              <button class="btn btn-sm btn-outline-primary btn-edit-partner"
+                      data-id="{{ p.id }}"
+                      data-json='{{ p|tojson }}'>Edit</button>
+
+              <button class="btn btn-sm btn-outline-danger btn-delete-partner"
+                      data-id="{{ p.id }}">Delete</button>
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      {% endif %}
+
+      {% if active_tab == 'employees' %}
+      <table class="table table-hover align-middle bg-white">
+        <thead class="table-light">
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Employee ID</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+
+        <tbody>
+        {% for e in employees %}
+          <tr>
+            <td>{{ e.name or '-' }}</td>
+            <td>{{ e.email or '-' }}</td>
+            <td>{{ e.phone or '-' }}</td>
+            <td>{{ e.employee_id or '-' }}</td>
+
+            <td>
+              {% if e.status == 'active' %}
+              <span class="status-badge badge-active">Active</span>
+              {% elif e.status == 'inactive' %}
+              <span class="status-badge badge-inactive">Inactive</span>
+              {% else %}
+              <span class="status-badge badge-pending">Pending</span>
+              {% endif %}
+            </td>
+
+            <td>
+              <button class="btn btn-sm btn-outline-primary btn-edit-employee"
+                      data-id="{{ e.id }}"
+                      data-json='{{ e|tojson }}'>Edit</button>
+
+              <button class="btn btn-sm btn-outline-danger btn-delete-employee"
+                      data-id="{{ e.id }}">Delete</button>
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      {% endif %}
+
+    </div>
+
+    <!-- PAGINATION -->
+    <div class="d-flex justify-content-between mt-3">
+      <span class="text-muted">
+        Page {{ page }} of {{ total_pages }} • Total: {{ total_count }}
+      </span>
+
+      <div>
+        <a href="?tab={{ active_tab }}&page={{ page-1 if page>1 else 1 }}"
+           class="btn btn-outline-secondary">Prev</a>
+
+        <a href="?tab={{ active_tab }}&page={{ page+1 if page<total_pages else total_pages }}"
+           class="btn btn-primary">Next</a>
+      </div>
+    </div>
+
+  </div>
+</div>
+<!-- ======================= MODALS ======================= -->
+
+<!-- Add Partner Modal -->
+<div class="modal fade" id="addPartnerModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <form id="addPartnerForm" class="modal-content">
+
+      <div class="modal-header">
+        <h5>Add Partner</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <div class="row g-2">
+
+          <div class="col-md-6"><input name="name" required class="form-control" placeholder="Name"></div>
+          <div class="col-md-6"><input name="email" required class="form-control" placeholder="Email"></div>
+
+          <div class="col-md-4"><input name="phone" class="form-control" placeholder="Phone"></div>
+          <div class="col-md-4"><input name="city" class="form-control" placeholder="City"></div>
+          <div class="col-md-4"><input name="state" class="form-control" placeholder="State"></div>
+
+          <div class="col-12"><input name="address" class="form-control" placeholder="Address"></div>
+
+          <div class="col-md-6"><input name="profession_manual" class="form-control" placeholder="Profession"></div>
+
+          <div class="col-md-6">
+            <select name="status" class="form-select">
+              <option value="pending">Pending</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-primary">Create Partner</button>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+<!-- Edit Partner Modal -->
+<div class="modal fade" id="editPartnerModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <form id="editPartnerForm" class="modal-content">
+
+      <div class="modal-header">
+        <h5>Edit Partner</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <input type="hidden" id="editPartnerId" name="id">
+
+        <div class="row g-2">
+          <div class="col-md-6"><input id="edit_name" name="name" required class="form-control"></div>
+          <div class="col-md-6"><input id="edit_email" name="email" required class="form-control"></div>
+
+          <div class="col-md-4"><input id="edit_phone" name="phone" class="form-control"></div>
+          <div class="col-md-4"><input id="edit_city" name="city" class="form-control"></div>
+          <div class="col-md-4"><input id="edit_state" name="state" class="form-control"></div>
+
+          <div class="col-12"><input id="edit_address" name="address" class="form-control"></div>
+
+          <div class="col-md-6"><input id="edit_profession_manual" name="profession_manual" class="form-control"></div>
+
+          <div class="col-md-6">
+            <select id="edit_status" name="status" class="form-select">
+              <option value="pending">Pending</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-primary">Save Changes</button>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+
+<!-- Add Employee Modal -->
+<div class="modal fade" id="addEmployeeModal" tabindex="-1">
+  <div class="modal-dialog">
+    <form id="addEmployeeForm" class="modal-content">
+
+      <div class="modal-header">
+        <h5>Add Employee</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <div class="row g-2">
+          <div class="col-12"><input name="name" required class="form-control" placeholder="Name"></div>
+          <div class="col-12"><input name="email" required class="form-control" placeholder="Email"></div>
+          <div class="col-12"><input name="phone" class="form-control" placeholder="Phone"></div>
+          <div class="col-12"><input name="employee_id" class="form-control" placeholder="Employee ID"></div>
+          <div class="col-12">
+            <select name="employee_type" class="form-select" required>
+              <option value="">Select Employee Type</option>
+              <option value="sales">Sales</option>
+              <option value="execution">Execution</option>
+            </select>
+          </div>
+          
+          
+
+          <div class="col-12 mt-2">
+            <select name="status" class="form-select">
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-primary">Create Employee</button>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+
+<!-- Edit Employee Modal -->
+<div class="modal fade" id="editEmployeeModal" tabindex="-1">
+  <div class="modal-dialog">
+    <form id="editEmployeeForm" class="modal-content">
+
+      <div class="modal-header">
+        <h5>Edit Employee</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <input type="hidden" id="editEmployeeId" name="id">
+
+        <div class="row g-2">
+          <div class="col-12"><input id="e_name" name="name" required class="form-control"></div>
+          <div class="col-12"><input id="e_email" name="email" required class="form-control"></div>
+          <div class="col-12"><input id="e_phone" name="phone" class="form-control"></div>
+          <div class="col-12"><input id="e_employee_id" name="employee_id" class="form-control"></div>
+
+          <div class="col-12 mt-2">
+            <select id="e_status" name="status" class="form-select">
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-primary">Save Employee</button>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+
+<!-- ======================= JAVASCRIPT ======================= -->
+
+<script>
+
+  /* ==================== STATUS CLICK ==================== */
+  document.querySelectorAll(".status-click").forEach(el => {
+    el.addEventListener("click", async () => {
+
+      const id = el.dataset.id;
+      const toggle = document.querySelector(`.partner-toggle[data-id='${id}']`);
+      if (toggle) toggle.checked = !toggle.checked;
+
+      try {
+        const res = await fetch(`/admin/partners/toggle/${id}`, { method: "POST" });
+        const j = await res.json();
+        if (j.success) location.reload();
+      } catch {
+        alert("Network error");
+      }
+    });
+  });
+
+  /* ================= Add Partner ================= */
+  addPartnerForm?.addEventListener("submit", async ev => {
+    ev.preventDefault();
+    const fd = new FormData(ev.target);
+    const res = await fetch("/admin/partners/add", { method: "POST", body: fd });
+    const j = await res.json();
+    if (j.success) location.reload();
+  });
+
+  /* ================= Edit Partner ================= */
+  document.querySelectorAll(".btn-edit-partner").forEach(btn => {
+    btn.onclick = () => {
+      const p = JSON.parse(btn.dataset.json);
+
+      editPartnerId.value = p.id;
+      edit_name.value = p.name || "";
+      edit_email.value = p.email || "";
+      edit_phone.value = p.phone || "";
+      edit_city.value = p.city || "";
+      edit_state.value = p.state || "";
+      edit_address.value = p.address || "";
+      edit_profession_manual.value = p.profession_manual || "";
+      edit_status.value = p.status || "pending";
+
+      new bootstrap.Modal(document.getElementById("editPartnerModal")).show();
+    };
+  });
+
+  editPartnerForm?.addEventListener("submit", async ev => {
+    ev.preventDefault();
+    const id = editPartnerId.value;
+    const fd = new FormData(ev.target);
+    const res = await fetch(`/admin/partners/edit/${id}`, { method: "POST", body: fd });
+    const j = await res.json();
+    if (j.success) location.reload();
+  });
+
+  /* ================= Delete Partner ================= */
+  document.querySelectorAll(".btn-delete-partner").forEach(btn => {
+    btn.onclick = async () => {
+      if (!confirm("Delete partner?")) return;
+      const res = await fetch(`/admin/partners/delete/${btn.dataset.id}`, { method: "POST" });
+      const j = await res.json();
+      if (j.success) location.reload();
+    };
+  });
+
+
+  /* ================= Add Employee ================= */
+  addEmployeeForm?.addEventListener("submit", async ev => {
+    ev.preventDefault();
+    const fd = new FormData(ev.target);
+    const res = await fetch("/admin/employees/add", { method: "POST", body: fd });
+    const j = await res.json();
+    if (j.success) location.reload();
+  });
+
+
+  /* ================= Edit Employee ================= */
+  document.querySelectorAll(".btn-edit-employee").forEach(btn => {
+    btn.onclick = () => {
+      const e = JSON.parse(btn.dataset.json);
+
+      editEmployeeId.value = e.id;
+      e_name.value = e.name;
+      e_email.value = e.email;
+      e_phone.value = e.phone;
+      e_employee_id.value = e.employee_id;
+      e_status.value = e.status;
+
+      new bootstrap.Modal(document.getElementById("editEmployeeModal")).show();
+    };
+  });
+
+  editEmployeeForm?.addEventListener("submit", async ev => {
+    ev.preventDefault();
+    const id = editEmployeeId.value;
+    const fd = new FormData(ev.target);
+    const res = await fetch(`/admin/employees/edit/${id}`, { method: "POST", body: fd });
+    const j = await res.json();
+    if (j.success) location.reload();
+  });
+
+
+  /* ================= Delete Employee ================= */
+  document.querySelectorAll(".btn-delete-employee").forEach(btn => {
+    btn.onclick = async () => {
+      if (!confirm("Delete employee?")) return;
+      const res = await fetch(`/admin/employees/delete/${btn.dataset.id}`, { method: "POST" });
+      const j = await res.json();
+      if (j.success) location.reload();
+    };
+  });
+
+</script>
+
+{% endblock %}

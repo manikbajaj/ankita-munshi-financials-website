@@ -1,0 +1,73 @@
+{% extends "employee/sales/layout.html" %}
+{% block sales_content %}
+
+<h4>My Partners</h4>
+
+<form method="GET" class="row g-2 mb-3 align-items-end">
+
+<div class="col-md-4">
+<input name="search"
+value="{{ request.args.get('search','') }}"
+class="form-control"
+placeholder="Search Partner (Code / Name / City)">
+</div>
+
+<div class="col-md-3">
+<select name="status" class="form-select">
+<option value="">All Status</option>
+<option value="active" {% if request.args.get('status')=='active' %}selected{% endif %}>Active</option>
+<option value="pending" {% if request.args.get('status')=='pending' %}selected{% endif %}>Pending</option>
+<option value="inactive" {% if request.args.get('status')=='inactive' %}selected{% endif %}>Inactive</option>
+</select>
+</div>
+
+<div class="col-md-2">
+<button class="btn btn-primary w-100">Apply</button>
+</div>
+
+<div class="col-md-2">
+<a href="{{ url_for('employee_sales.partners_page') }}"
+class="btn btn-outline-secondary w-100">Reset</a>
+</div>
+
+</form>
+
+<table class="table table-bordered bg-white">
+<thead>
+<tr>
+<th>Code</th>
+<th>Name</th>
+<th>Phone</th>
+<th>City</th>
+<th>Status</th>
+<th>Created</th>
+</tr>
+</thead>
+
+<tbody>
+{% for p in partners %}
+<tr>
+<td>{{ p.partner_code }}</td>
+<td>{{ p.name }}</td>
+<td>{{ p.phone }}</td>
+<td>{{ p.city }}</td>
+
+<td>
+{% if p.status=="active" %}
+<span class="badge bg-success">Active</span>
+{% elif p.status=="pending" %}
+<span class="badge bg-warning text-dark">Pending</span>
+{% elif p.status=="inactive" %}
+<span class="badge bg-secondary">Inactive</span>
+{% else %}
+<span class="badge bg-light text-dark">{{ p.status|title }}</span>
+{% endif %}
+</td>
+
+<td>{{ p.created_at }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+{% endblock %}

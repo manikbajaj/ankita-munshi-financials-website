@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h4 class="mb-3">📊 Sales Performance</h4>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-3"><div class="card p-3">Orders<br><h4>{{ stats.total_orders }}</h4></div></div>
+  <div class="col-md-3"><div class="card p-3">Sales<br><h4>₹{{ stats.total_sales }}</h4></div></div>
+  <div class="col-md-3"><div class="card p-3">Completed<br><h4>{{ stats.completed }}</h4></div></div>
+  <div class="col-md-3"><div class="card p-3">Pending<br><h4>{{ stats.pending }}</h4></div></div>
+</div>
+
+<table class="table table-hover bg-white">
+<thead>
+<tr>
+<th>Order</th>
+<th>Partner</th>
+<th>Date</th>
+<th>Amount</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+{% for o in orders %}
+<tr>
+<td>{{ o.order_number }}</td>
+<td>{{ o.partner_id }}</td>
+<td>{{ o.created_at.strftime('%d %b %Y') }}</td>
+<td>₹{{ o.amount_total }}</td>
+<td>{{ o.status }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+{% endblock %}

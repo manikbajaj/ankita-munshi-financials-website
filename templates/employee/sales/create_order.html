@@ -1,0 +1,39 @@
+{% extends "employee/sales/layout.html" %}
+{% block sales_content %}
+
+<h4>Create Order</h4>
+
+<form method="POST" enctype="multipart/form-data">
+
+<select id="partner_select" name="partner_id" class="form-select mb-2" required>
+<option value="">Select Partner</option>
+{% for p in partners %}
+<option value="{{ p.id }}">{{ p.display }}</option>
+{% endfor %}
+</select>
+
+<input name="work_title" class="form-control mb-2" placeholder="Work" required>
+
+<textarea name="extra_description" class="form-control mb-2" placeholder="Extra"></textarea>
+
+<input type="file" name="attachments" multiple class="form-control mb-3">
+
+<button class="btn btn-primary">Submit</button>
+
+</form>
+
+
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0/dist/css/select2.min.css" rel="stylesheet">
+
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0/dist/js/select2.min.js"></script>
+
+<script>
+$(document).ready(function() {
+    $('#partner_select').select2({
+        placeholder: "Search Partner",
+        width: '100%'
+    });
+});
+</script>
+
+{% endblock %}

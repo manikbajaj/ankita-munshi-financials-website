@@ -1,0 +1,166 @@
+{# =========================
+  ✅ HARD SAFETY DEFAULTS
+========================= #}
+{% set page = page | default(1) %}
+{% set total_pages = total_pages | default(1) %}
+{% set transactions = transactions | default([]) %}
+{% set txn_no = request.args.get('txn_no','') %}
+{% set employee = request.args.get('employee','') %}
+{% set note = request.args.get('note','') %}
+{% set txn_type = request.args.get('txn_type','') %}
+
+<div class="card shadow-sm p-3">
+
+  <h4 class="mb-3">💰 Wallet Transactions</h4>
+
+
+  <form method="get" class="row g-2 mb-3 align-items-end">
+    <input type="hidden" name="tab" value="wallet">
+
+    <div class="col-md-3">
+      <label class="form-label small text-muted">Transaction No</label>
+      <input type="text"
+             class="form-control"
+             name="txn_no"
+             value="{{ txn_no }}">
+    </div>
+
+    <div class="col-md-2">
+      <label class="form-label small text-muted">Type</label>
+      <select name="txn_type" class="form-select">
+        <option value="">All</option>
+        <option value="wallet" {{ 'selected' if txn_type=='wallet' else '' }}>Wallet</option>
+        <option value="direct" {{ 'selected' if txn_type=='direct' else '' }}>Direct</option>
+        <option value="refund" {{ 'selected' if txn_type=='refund' else '' }}>Refund</option>
+      </select>
+    </div>
+
+    <div class="col-md-2">
+      <label class="form-label small text-muted">Employee</label>
+      <input type="text"
+             class="form-control"
+             name="employee"
+             value="{{ employee }}">
+    </div>
+
+    <div class="col-md-3">
+      <label class="form-label small text-muted">Note</label>
+      <input type="text"
+             class="form-control"
+             name="note"
+             value="{{ note }}">
+    </div>
+
+    <div class="col-md-2 d-flex gap-2">
+      <button class="btn btn-primary w-100">Filter</button>
+      <a href="/partner/dashboard?tab=wallet"
+         class="btn btn-outline-secondary w-100">
+        Clear
+      </a>
+    </div>
+  </form>
+
+
+  <div class="table-responsive">
+    <table class="table table-hover align-middle bg-white">
+      <thead class="table-light">
+        <tr>
+          <th>Transaction No</th>
+          <th>Type</th>
+          <th>Employee</th>
+          <th>Date</th>
+          <th class="text-end">Amount</th>
+          <th>Note</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {% for t in transactions %}
+        <tr>
+          <td>{{ t.transaction_number or "-" }}</td>
+
+          <!-- TYPE -->
+          <td>
+            {% set ttype = (t.type or "").lower() %}
+            {% if ttype == "wallet" %}
+              <span class="badge badge-wallet">Wallet</span>
+            {% elif ttype == "direct" %}
+              <span class="badge badge-direct">Direct</span>
+            {% elif ttype == "refund" %}
+              <span class="badge badge-refund">Refund</span>
+            {% else %}
+              <span class="badge bg-light text-muted">Unknown</span>
+            {% endif %}
+          </td>
+
+          <td>{{ t.employee_name or "-" }}</td>
+
+          <td>
+            {{ t.created_at.strftime('%d %b %Y %I:%M %p')
+               if t.created_at else "-" }}
+          </td>
+
+          <td class="fw-semibold text-end">
+            {% if ttype == "refund" %}
+              <span class="text-success">
+                + ₹ {{ "%.2f"|format(t.amount or 0) }}
+              </span>
+            {% else %}
+              ₹ {{ "%.2f"|format(t.amount or 0) }}
+            {% endif %}
+          </td>
+
+          <td>{{ t.note or "-" }}</td>
+        </tr>
+        {% endfor %}
+
+        {% if transactions|length == 0 %}
+        <tr>
+          <td colspan="6" class="text-center text-muted py-3">
+            No wallet transactions found
+          </td>
+        </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+
+
+  <div class="d-flex justify-content-between align-items-center mt-3">
+    <span class="text-muted small">
+      Page {{ page }} of {{ total_pages }}
+    </span>
+
+    <div class="d-flex gap-2">
+      <a href="?tab=wallet&page={{ page-1 if page>1 else 1 }}"
+         class="btn btn-outline-secondary btn-sm">
+        Prev
+      </a>
+
+      <a href="?tab=wallet&page={{ page+1 if page<total_pages else total_pages }}"
+         class="btn btn-primary btn-sm">
+        Next
+      </a>
+    </div>
+  </div>
+
+</div>
+
+
+<style>
+  .badge-wallet {
+    background: #eef2ff;
+    color: #4338ca;
+    font-weight: 500;
+  }
+  .badge-direct {
+    background: #ecfeff;
+    color: #0f766e;
+    font-weight: 500;
+  }
+  .badge-refund {
+    background: #ecfdf5;
+    color: #047857;
+    font-weight: 500;
+  }
+</style>

@@ -1,0 +1,50 @@
+<div class="sidebar">
+
+  <a href="{{ url_for('admin.dashboard', tab='partners') }}"
+     class="nav-link {% if active_tab=='partners' %}active{% endif %}">
+    <i class="bi bi-people-fill me-2"></i> User Management
+  </a>
+
+  <a href="{{ url_for('admin.partner_orders') }}"
+     class="nav-link {% if active_tab=='partner_orders' %}active{% endif %}">
+    <i class="bi bi-receipt-cutoff me-2"></i> Partner Orders
+  </a>
+
+  <a href="{{ url_for('admin.partner_clients') }}"
+     class="nav-link {% if active_tab=='partner_clients' %}active{% endif %}">
+    <i class="bi bi-person-lines-fill me-2"></i> Partner Clients
+  </a>
+
+  <a href="{{ url_for('admin.configuration') }}"
+     class="nav-link {% if active_tab=='configuration' %}active{% endif %}">
+    <i class="bi bi-gear-fill me-2"></i> Configuration
+  </a>
+
+  <hr style="border-color:#123; opacity:.1;">
+
+  {% if active_tab == 'partners' or active_tab == 'employees' %}
+
+    <div class="text-muted small">Quick Actions</div>
+
+    <button class="btn btn-sm btn-light w-100 mt-2"
+            data-bs-toggle="modal"
+            data-bs-target="#addPartnerModal">
+      <i class="bi bi-plus-circle me-1"></i> Add Partner
+    </button>
+
+    <button class="btn btn-sm btn-light w-100 mt-2"
+            data-bs-toggle="modal"
+            data-bs-target="#addEmployeeModal">
+      <i class="bi bi-plus-circle me-1"></i> Add Employee
+    </button>
+
+  {% endif %}
+
+  <!-- push logout to bottom -->
+  <div style="flex:1"></div>
+
+  <a href="/admin/logout" class="btn btn-sm btn-outline-danger w-100 mt-3">
+    <i class="bi bi-box-arrow-right"></i> Logout
+  </a>
+
+</div>

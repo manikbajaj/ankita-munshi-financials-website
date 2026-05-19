@@ -1,0 +1,341 @@
+{% extends "base.html" %}
+{% block title %}Partner Clients{% endblock %}
+{% block content %}
+
+<!-- ================= CSS ================= -->
+<link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.14.0-beta3/dist/css/bootstrap-select.min.css">
+
+<style>
+  body { background:#f3f5f7; }
+  .filters {
+    background:#fff;
+    padding:12px;
+    border-radius:8px;
+    box-shadow:0 4px 12px rgba(0,0,0,.05);
+  }
+</style>
+
+<div class="layout">
+  {% include "employee/_sidebar.html" %}
+
+  <div class="main container-fluid">
+
+    <!-- ================= HEADER ================= -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div>
+        <h3 class="mb-0">Partner Clients</h3>
+        <div class="text-muted small">Partner-wise client management</div>
+      </div>
+
+      <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addClientModal">
+        <i class="bi bi-plus-circle me-1"></i> Add Client
+      </button>
+    </div>
+
+    <!-- ================= FILTERS ================= -->
+    <div class="filters mb-3">
+      <form class="row g-2" method="get">
+
+        <div class="col-md-3">
+          <select name="partner_id" class="form-select">
+            <option value="">All Partners</option>
+            {% for pid, p in partners_map.items() %}
+              <option value="{{ pid }}" {% if filters.partner_id==pid %}selected{% endif %}>
+                {{ p.get('name','-') }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="col-md-2">
+          <input name="client_name" class="form-control"
+                 placeholder="Client name"
+                 value="{{ filters.client_name }}">
+        </div>
+
+        <div class="col-md-2">
+          <input name="phone" class="form-control"
+                 placeholder="Phone"
+                 value="{{ filters.phone }}">
+        </div>
+
+        <div class="col-md-2">
+          <input name="email" class="form-control"
+                 placeholder="Email"
+                 value="{{ filters.email }}">
+        </div>
+
+        <div class="col-md-2">
+          <select name="is_active" class="form-select">
+            <option value="">Any Status</option>
+            <option value="true" {% if filters.is_active=='true' %}selected{% endif %}>Active</option>
+            <option value="false" {% if filters.is_active=='false' %}selected{% endif %}>Inactive</option>
+          </select>
+        </div>
+
+        <div class="col-md-1">
+          <button class="btn btn-primary w-100">Apply</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- ================= TABLE ================= -->
+    <div class="table-responsive">
+      <table class="table table-hover align-middle bg-white">
+        <thead class="table-light">
+          <tr>
+            <th>Client</th>
+            <th>Contact</th>
+            <th>Partner</th>
+            <th>Added By</th>
+            <th>Status</th>
+            <th>Created</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+
+        <tbody>
+        {% for c in clients %}
+          <tr>
+            <td>
+              <strong>{{ c.client_name }}</strong><br>
+              <small class="text-muted">{{ c.notes }}</small>
+            </td>
+
+            <td>
+              {{ c.client_phone }}<br>
+              <small class="text-muted">{{ c.client_email }}</small>
+            </td>
+
+            <td>
+              {{ partners_map.get(c.partner_id, {}).get('name','-') }}
+            </td>
+
+            <td>
+              {{ c.added_by_display.name }}<br>
+              <small class="text-muted">{{ c.added_by_display.email }}</small>
+            </td>
+
+            <td>
+              {% if c.is_active %}
+                <span class="badge bg-success">Active</span>
+              {% else %}
+                <span class="badge bg-danger">Inactive</span>
+              {% endif %}
+            </td>
+
+            <td>
+              {{ c.created_at.strftime('%Y-%m-%d') if c.created_at else '-' }}
+            </td>
+
+            <td class="text-nowrap">
+              <button class="btn btn-sm btn-outline-primary btn-edit-client"
+                data-id="{{ c.id }}"
+                data-name="{{ c.client_name }}"
+                data-phone="{{ c.client_phone }}"
+                data-email="{{ c.client_email }}"
+                data-notes="{{ c.notes }}"
+                data-partner="{{ c.partner_id }}">
+                Edit
+              </button>
+
+              <button class="btn btn-sm btn-outline-warning btn-toggle-client fixed-toggle-btn"
+                data-id="{{ c.id }}">
+                {{ "Deactivate" if c.is_active else "Activate" }}
+              </button>
+            </td>
+          </tr>
+        {% else %}
+          <tr>
+            <td colspan="7" class="text-center text-muted">
+              No clients found
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<!-- ================= ADD CLIENT MODAL ================= -->
+<div class="modal fade" id="addClientModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <form id="addClientForm" class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title">Add Client</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body row g-2">
+        <div class="col-md-6">
+          <input name="client_name" class="form-control" placeholder="Client Name" required>
+        </div>
+
+        <div class="col-md-6">
+          <input name="client_phone" class="form-control" placeholder="Phone" required>
+        </div>
+
+        <div class="col-md-6">
+          <input name="client_email" class="form-control" placeholder="Email">
+        </div>
+
+        <div class="col-md-6">
+          <select name="partner_id"
+          class="form-select"
+          required>
+  
+            <option value="">Select Partner</option>
+            {% for pid, p in partners_map.items() %}
+              <option value="{{ pid }}">{{ p.get('name','-') }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="col-12">
+          <textarea name="notes" class="form-control" placeholder="Internal notes"></textarea>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-primary">Create Client</button>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+<!-- ================= EDIT CLIENT MODAL ================= -->
+<div class="modal fade" id="editClientModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <form id="editClientForm" class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title">Edit Client</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body row g-2">
+        <input type="hidden" id="edit_client_id">
+
+        <div class="col-md-6">
+          <input id="edit_client_name" name="client_name" class="form-control" required>
+        </div>
+
+        <div class="col-md-6">
+          <input id="edit_client_phone" name="client_phone" class="form-control" required>
+        </div>
+
+        <div class="col-md-6">
+          <input id="edit_client_email" name="client_email" class="form-control">
+        </div>
+
+        <div class="col-md-6">
+          <select id="edit_partner_id"
+                  name="partner_id"
+                  class="selectpicker form-control"
+                  data-live-search="true"
+                  required>
+            <option value="">Select Partner</option>
+            {% for pid, p in partners_map.items() %}
+              <option value="{{ pid }}">{{ p.get('name','-') }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="col-12">
+          <textarea id="edit_notes" name="notes" class="form-control"></textarea>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button  type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-primary">Save Changes</button>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+<!-- ================= JS (ORDER MATTERS) ================= -->
+
+<!-- 1️⃣ jQuery FIRST -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- 2️⃣ Bootstrap JS already loaded in base.html -->
+
+<!-- 3️⃣ bootstrap-select (ONLY ONCE) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.14.0-beta3/dist/js/bootstrap-select.min.js"></script>
+
+<script>
+/* init selectpicker AFTER full load */
+$(window).on('load', function () {
+  $('.selectpicker').selectpicker();
+});
+
+/* refresh when modal opens */
+$('#addClientModal, #editClientModal').on('shown.bs.modal', function () {
+  $(this).find('.selectpicker').selectpicker('refresh');
+});
+
+/* ADD CLIENT */
+$('#addClientForm').on('submit', async function(e){
+  e.preventDefault();
+  const r = await fetch("/employee/clients/add", {
+    method: "POST",
+    body: new FormData(this)
+  });
+  const j = await r.json();
+  if (j.success) location.reload();
+  else alert(j.error || "Failed");
+});
+
+/* OPEN EDIT */
+document.querySelectorAll(".btn-edit-client").forEach(btn => {
+  btn.onclick = () => {
+    edit_client_id.value = btn.dataset.id;
+    edit_client_name.value = btn.dataset.name || "";
+    edit_client_phone.value = btn.dataset.phone || "";
+    edit_client_email.value = btn.dataset.email || "";
+    edit_notes.value = btn.dataset.notes || "";
+
+    // 🔥 SIMPLE SELECT (NO selectpicker)
+    edit_partner_id.value = btn.dataset.partner || "";
+
+    new bootstrap.Modal(
+      document.getElementById("editClientModal")
+    ).show();
+  };
+});
+
+
+/* SAVE EDIT */
+$('#editClientForm').on('submit', async function(e){
+  e.preventDefault();
+  const id = edit_client_id.value;
+  const r = await fetch(`/employee/clients/edit/${id}`, {
+    method: "POST",
+    body: new FormData(this)
+  });
+  const j = await r.json();
+  if (j.success) location.reload();
+});
+
+/* TOGGLE ACTIVE */
+document.querySelectorAll(".btn-toggle-client").forEach(btn => {
+  btn.onclick = async () => {
+    if (!confirm("Change client status?")) return;
+    const r = await fetch(`/employee/clients/toggle/${btn.dataset.id}`, {
+      method: "POST"
+    });
+    const j = await r.json();
+    if (j.success) location.reload();
+  };
+});
+</script>
+
+{% endblock %}

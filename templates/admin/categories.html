@@ -1,0 +1,18 @@
+{% extends "admin/dashboard.html" %}
+{% block content %}
+<div class="container mt-3">
+  <h4>Manage Categories</h4>
+  <form method="post" class="mb-3">
+    <div class="input-group">
+      <input class="form-control" name="name" placeholder="Category name">
+      <button class="btn btn-primary">Add</button>
+    </div>
+  </form>
+  <table class="table">
+    <tr><th>Name</th><th>Created At</th></tr>
+    {% for c in categories %}
+    <tr><td>{{ c.name }}</td><td>{{ c.created_at }}</td></tr>
+    {% endfor %}
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Munshi Financials | Trusted CA Network</title>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial;
+    }
+
+    html, body {
+      width: 100%;
+      overflow-x: hidden;
+    }
+
+    body {
+      background: #f3f5f7;
+      color: #111827;
+    }
+
+    /* ================= NAVBAR ================= */
+    .navbar {
+      background: #ffffff;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+      padding: 6px 0;
+    }
+
+    .navbar-inner {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 24px;
+    }
+
+    .navbar-logo {
+      height: 70px;
+      width: auto;
+      object-fit: contain;
+      transform: scale(2.5);
+      transform-origin: left center;
+    }
+
+    .nav-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .btn {
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+      border: none;
+      text-decoration: none;
+    }
+
+    .btn.primary {
+      background: #2563eb;
+      color: white;
+    }
+
+    .btn.outline {
+      border: 1px solid #2563eb;
+      background: white;
+      color: #2563eb;
+    }
+
+    /* ================= DROPDOWN ================= */
+    .dropdown {
+      position: relative;
+    }
+
+    .dropdown-menu {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 110%;
+      background: white;
+      border-radius: 6px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+      overflow: hidden;
+      min-width: 180px;
+      z-index: 10;
+    }
+
+    .dropdown-menu a {
+      display: block;
+      padding: 12px 16px;
+      font-size: 14px;
+      color: #111827;
+      text-decoration: none;
+    }
+
+    .dropdown-menu a:hover {
+      background: #f3f4f6;
+    }
+
+    .dropdown:hover .dropdown-menu {
+      display: block;
+    }
+
+    /* ================= HERO ================= */
+    .hero-wrapper {
+      background: linear-gradient(180deg, #f7f9fc 0%, #ffffff 100%);
+    }
+
+    .hero {
+      max-width: 1300px;
+      margin: auto;
+      padding: 60px 40px 40px;
+    }
+
+    .hero h1 {
+      font-size: 40px;
+      font-weight: 700;
+      margin-bottom: 18px;
+    }
+
+    .hero p {
+      font-size: 16px;
+      color: #374151;
+      line-height: 1.7;
+      margin-bottom: 26px;
+      max-width: 760px;
+    }
+
+    .hero-points {
+      margin-bottom: 28px;
+      padding-left: 18px;
+    }
+
+    .hero-points li {
+      margin-bottom: 10px;
+      font-size: 15px;
+      color: #1f2937;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 14px;
+    }
+
+    /* ================= VISUAL STRIP ================= */
+    .visual-strip {
+      max-width: 1300px;
+      margin: auto;
+      padding: 40px;
+      display: flex;
+      gap: 32px;
+    }
+
+    .visual-box {
+      flex: 1;
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 28px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+      text-align: center;
+    }
+
+    .visual-box img {
+      height: 72px;          
+      margin-bottom: 14px;
+    }
+
+    .visual-box h4 {
+      font-size: 16px;
+      margin-bottom: 8px;
+    }
+
+    .visual-box p {
+      font-size: 14px;
+      color: #4b5563;
+      line-height: 1.6;
+    }
+
+    /* ================= FOOTER ================= */
+    footer {
+      background: #ffffff;
+      margin-top: 60px;
+      padding: 28px 20px;
+      text-align: center;
+      font-size: 13px;
+      color: #6b7280;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    /* ================= CHAT BOT ================= */
+    .chatbot {
+      position: fixed;
+      bottom: 26px;
+      right: 26px;
+      height: 56px;
+      width: 56px;
+      background: #2563eb;
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      cursor: pointer;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+  </style>
+</head>
+
+<body>
+
+<!-- ================= NAVBAR ================= -->
+<nav class="navbar">
+  <div class="navbar-inner">
+    <a href="#">
+      <img src="/static/img/logo.png" class="navbar-logo" alt="Munshi Financials">
+    </a>
+
+    <div class="nav-actions">
+      <a class="btn outline" href="#">Support</a>
+
+      <div class="dropdown">
+        <button class="btn primary">Login</button>
+        <div class="dropdown-menu">
+          <a href="/admin/admin-login">Admin Login</a>
+          <a href="/partner/login">Partner Login</a>
+          <a href="/employee/login">Employee Login</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- ================= HERO ================= -->
+<div class="hero-wrapper">
+  <section class="hero">
+    <h1>Your Trusted Back-End Work Support for Finances, Taxation & Corporate Compliances</h1>
+
+    <p>
+      We enable our partners to focus on their clients and grow their business, leaving the burden of timely working with us.
+    </p>
+
+    <ul class="hero-points">
+      <li>✔ Complete backend support work.</li>
+      <li>✔ Pay for the services you take. No Registeration Cost.</li>
+      <li>✔ One stop for all kinds of Accounting, Finance, Taxation & Corporate Compliance Services.</li>
+    </ul>
+
+    <div class="hero-actions">
+      <a class="btn primary" href="/partner/login">Partner Login</a>
+      <a class="btn outline" href="#">Become a Partner</a>
+    </div>
+  </section>
+</div>
+
+<!-- ================= VISUAL STRIP ================= -->
+<section class="visual-strip">
+  <div class="visual-box">
+    <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png">
+    <h4>Centralized Partner Operations</h4>
+    <p>Track orders, clients, execution status and communication from one place.</p>
+  </div>
+
+  <div class="visual-box">
+    <img src="https://cdn-icons-png.flaticon.com/512/2920/2920277.png">
+    <h4>Secure Order-Based System</h4>
+    <p>Place orders as per your clients requirement. Data Security is ensured.</p>
+  </div>
+
+  <div class="visual-box">
+    <img src="https://cdn-icons-png.flaticon.com/512/942/942748.png">
+    <h4>Personalized Employee Service</h4>
+    <p>Personalized Employee Services also available. COntact sales for details.</p>
+  </div>
+</section>
+
+<!-- ================= CHATBOT ================= -->
+<div class="chatbot">💬</div>
+
+<!-- ================= FOOTER ================= -->
+<footer>
+  © All Rights Reserved to Learn & Serve Private Limited · Munshi Financials
+</footer>
+
+</body>
+</html>

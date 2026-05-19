@@ -1,0 +1,43 @@
+from flask import Flask,render_template
+from flask import render_template
+from dotenv import load_dotenv
+load_dotenv()
+from modules.firebase_client import FirebaseClient
+
+FirebaseClient.initialize("key.json")
+
+
+from modules.admin_routes import bp as admin_bp
+from modules.partner.partner_routes import bp as partner_bp
+from modules.employee.employee_routes import bp as employee_bp
+from modules.employee.employee_sales_routes import bp as employee_sales_bp
+
+
+app = Flask(__name__)
+
+
+app.secret_key = "super-secret-key-change-this"
+
+
+app.register_blueprint(admin_bp)
+
+app.register_blueprint(partner_bp)
+
+app.register_blueprint(employee_bp)
+app.register_blueprint(employee_sales_bp)
+
+@app.route("/")
+def home():
+     return render_template("home.html")
+
+
+@app.errorhandler(500)
+def internal_error(e):
+    return render_template(
+        "error.html",
+        error_message="Internal server error"
+    ), 500
+
+
+if __name__ == "__main__":
+    app.run(debug=True)

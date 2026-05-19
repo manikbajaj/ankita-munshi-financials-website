@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Munshi India - CA Portal</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/styles.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
+  <link rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+
+
+  <style>
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      overflow-x: hidden;
+    }
+
+    body {
+      background: #f3f5f7;
+    }
+
+    .layout {
+      display: flex;
+      width: 100%;
+    }
+
+    .sidebar {
+      width: 240px;
+      min-width: 240px;
+      background: #0b1220;
+      color: #e6eef8;
+      min-height: calc(100vh - 80px);
+      padding: 22px;
+      position: sticky;
+      top: 80px;
+    }
+
+    .main,
+    .main-panel {
+      width: calc(100% - 240px);
+      padding: 28px;
+    }
+
+    .sidebar .nav-link {
+      display: block;
+      padding: 8px 10px;
+      border-radius: 6px;
+      color: #cbd5f5;
+      text-decoration: none;
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+
+    .sidebar .nav-link.active,
+    .sidebar .nav-link:hover {
+      background: #12233b;
+      color: #fff;
+    }
+
+    .navbar-logo {
+      height: 70px;
+      width: auto;
+      object-fit: contain;
+      transform: scale(2.5);
+      transform-origin: left center;
+    }
+  </style>
+</head>
+
+<body>
+
+  <nav class="navbar navbar-light bg-white shadow-sm py-1">
+    <div class="w-100 d-flex justify-content-between align-items-center px-3">
+      <a class="navbar-brand d-flex align-items-center gap-2" href="#">
+        <img src="/static/img/logo.png" class="navbar-logo" alt="Munshi India">
+      </a>
+
+      <div class="text-end d-none d-md-block">
+        <h6 class="mb-0">Munshi Financials</h6>
+        <small class="text-muted">Trusted CA network</small>
+      </div>
+
+    </div>
+  </nav>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+  <div class="px-3 mt-2">
+    {% for category, message in messages %}
+    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+      {{ message }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+  {% endwith %}
+
+
+  <div class="w-100">
+    {% block content %}{% endblock %}
+  </div>
+
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/static/js/auth.js"></script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      setTimeout(() => {
+        document.querySelectorAll('.alert').forEach(el => {
+          try {
+            bootstrap.Alert.getOrCreateInstance(el).close();
+          } catch {
+            el.remove();
+          }
+        });
+      }, 3000);
+    });
+  </script>
+
+</body>
+
+</html>

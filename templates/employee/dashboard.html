@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4>Employee Dashboard</h4>
+    <a href="/employee/logout" class="btn btn-sm btn-danger">Logout</a>
+  </div>
+
+  <div class="card shadow p-4">
+    <p><strong>Name:</strong> {{ employee.name }}</p>
+    <p><strong>Email:</strong> {{ employee.email }}</p>
+    <p><strong>Phone:</strong> {{ employee.phone }}</p>
+    <p><strong>Employee ID:</strong> {{ employee.employee_id }}</p>
+    <p><strong>Status:</strong> {{ employee.status }}</p>
+    <p class="text-muted"><strong>Last Password Change:</strong> {{ employee.last_password_change }}</p>
+  </div>
+</div>
+
+{% endblock %}

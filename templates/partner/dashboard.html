@@ -1,0 +1,261 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+
+  .cropper-wrapper {
+    width: 300px;
+    height: 300px;
+    margin: 0 auto 12px;
+    position: relative;
+  }
+
+  .cropper-wrapper img {
+    max-width: 100%;
+    display: block;
+  }
+
+  .cropper-container {
+    max-width: 100% !important;
+    max-height: 100% !important;
+  }
+
+  .cropper-view-box,
+  .cropper-face {
+    border-radius: 50%;
+  }
+
+  .cropper-modal {
+    background-color: rgba(0,0,0,0.6);
+  }
+
+
+  .partner-layout {
+    display: flex;
+    min-height: calc(100vh - 52px);
+  }
+
+  .partner-sidebar {
+    width: 240px;
+    background: #0f172a;
+    color: white;
+    padding: 16px;
+  }
+
+  .partner-sidebar a {
+    color: #cbd5f5;
+    padding: 10px;
+    display: block;
+    text-decoration: none;
+    border-radius: 6px;
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+
+  .partner-sidebar a.active,
+  .partner-sidebar a:hover {
+    background: #1e293b;
+    color: white;
+  }
+
+  .partner-main {
+    flex: 1;
+    padding: 20px;
+    background: #f3f5f7;
+  }
+
+  .profile-box {
+    background: white;
+    padding: 14px 18px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0,0,0,.05);
+    margin-bottom: 18px;
+  }
+</style>
+
+<div class="partner-layout">
+
+  <!-- SIDEBAR -->
+  <div class="partner-sidebar">
+    <h5 class="mb-3">Partner Panel</h5>
+    <a href="/partner/dashboard?tab=wallet" class="{% if active_tab=='wallet' %}active{% endif %}">💰 Wallet</a>
+    <a href="/partner/dashboard?tab=new_order" class="{% if active_tab=='new_order' %}active{% endif %}">➕ New Order</a>
+    <a href="/partner/dashboard?tab=history" class="{% if active_tab=='history' %}active{% endif %}">📜 History</a>
+    <a href="/partner/dashboard?tab=clients" class="{% if active_tab=='clients' %}active{% endif %}">👤 Clients</a>
+    <a href="/partner/dashboard?tab=rate_chart" class="{% if active_tab=='rate_chart' %}active{% endif %}">📄 Rates</a>
+    <hr>
+    <a href="/partner/logout" class="text-danger">🚪 Logout</a>
+  </div>
+
+  <!-- MAIN -->
+  <div class="partner-main">
+
+    <div class="profile-box d-flex justify-content-between align-items-center">
+      <div class="d-flex align-items-center gap-3">
+        <img src="{{ partner.profile_photo_url or url_for('static', filename='img/default-user.png') }}"
+             class="rounded-circle border" width="60" height="60">
+        <div>
+          <strong>{{ partner.name }}</strong><br>
+          <small class="text-muted">{{ partner.email }}</small>
+        </div>
+      </div>
+
+      <button class="btn btn-sm btn-outline-primary"
+              data-bs-toggle="modal"
+              data-bs-target="#editProfileModal">
+        Edit Profile
+      </button>
+    </div>
+
+    
+        {% if active_tab == 'wallet' %}
+        {% include "partner/tabs/tab_wallet.html" %}
+    
+        {% elif active_tab == 'new_order' %}
+        {% include "partner/tabs/tab_new_order.html" %}
+    
+        {% elif active_tab == 'history' %}
+        {% include "partner/tabs/tab_history.html" %}
+    
+        {% elif active_tab == 'clients' %}
+        {% include "partner/tabs/tab_clients.html" %}
+    
+        {% elif active_tab == 'rate_chart' %}
+        {% include "partner/tabs/tab_rate_chart.html" %}
+    
+        {% else %}
+        {% include "partner/tabs/tab_wallet.html" %}
+        {% endif %}
+  </div>
+</div>
+
+
+<div class="modal fade" id="editProfileModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5>Edit Profile</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+
+        <form method="post"
+              action="/partner/profile/photo"
+              enctype="multipart/form-data"
+              id="photoForm"
+              class="text-center">
+
+          <div class="cropper-wrapper">
+            <img id="photoPreview"
+                 src="{{ partner.profile_photo_url or url_for('static', filename='img/default-user.png') }}">
+          </div>
+
+          <input type="file"
+                 id="photoInput"
+                 name="photo"
+                 accept="image/png,image/jpeg"
+                 class="form-control form-control-sm mb-2">
+
+          <div class="d-flex justify-content-center gap-2">
+            <button type="button"
+                    class="btn btn-sm btn-outline-danger"
+                    id="removePhotoBtn">
+              Remove
+            </button>
+            <button class="btn btn-sm btn-primary">
+              Save Photo
+            </button>
+          </div>
+
+          <input type="hidden" name="cropped_image" id="croppedImage">
+        </form>
+
+        <hr>
+
+   
+        <form method="post" action="/partner/profile">
+          <div class="mb-2">
+            <label>Name</label>
+            <input class="form-control form-control-sm" name="name" value="{{ partner.name }}">
+          </div>
+
+          <div class="mb-2">
+            <label>Address</label>
+            <input class="form-control form-control-sm" name="address" value="{{ partner.address }}">
+          </div>
+
+          <div class="row g-2">
+            <div class="col">
+              <label>City</label>
+              <input class="form-control form-control-sm" name="city" value="{{ partner.city }}">
+            </div>
+            <div class="col">
+              <label>State</label>
+              <input class="form-control form-control-sm" name="state" value="{{ partner.state }}">
+            </div>
+            <div class="col">
+              <label>Pincode</label>
+              <input class="form-control form-control-sm" name="pincode" value="{{ partner.pincode }}">
+            </div>
+          </div>
+
+          <div class="modal-footer px-0 mt-3">
+            <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+            <button class="btn btn-primary btn-sm">Save Changes</button>
+          </div>
+        </form>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let cropper;
+  const input = document.getElementById('photoInput');
+  const preview = document.getElementById('photoPreview');
+  const croppedField = document.getElementById('croppedImage');
+
+  input.addEventListener('change', function () {
+    const file = this.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      preview.src = reader.result;
+      if (cropper) cropper.destroy();
+
+      cropper = new Cropper(preview, {
+        aspectRatio: 1,
+        viewMode: 2,
+        autoCropArea: 1,
+        dragMode: 'move',
+        background: false,
+        zoomable: true,
+        rotatable: false,
+        scalable: false
+      });
+    };
+    reader.readAsDataURL(file);
+  });
+
+  document.getElementById('photoForm').addEventListener('submit', function (e) {
+    if (!cropper) {
+      e.preventDefault();
+      alert("Select and crop image first");
+      return;
+    }
+    const canvas = cropper.getCroppedCanvas({ width: 300, height: 300 });
+    croppedField.value = canvas.toDataURL('image/jpeg');
+  });
+
+  document.getElementById('removePhotoBtn').onclick = () => {
+    preview.src = "{{ url_for('static', filename='img/default-user.png') }}";
+    croppedField.value = "REMOVE";
+    if (cropper) cropper.destroy();
+  };
+</script>
+
+{% endblock %}

@@ -1,0 +1,12 @@
+Flask
+python-dotenv
+firebase-admin
+google-cloud-firestore
+google-cloud-storage
+google-auth
+bcrypt
+Werkzeug
+requests
+pandas
+reportlab
+google-cloud-core
