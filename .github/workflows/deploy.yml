@@ -1,0 +1,19 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 35.154.93.59
+          username: aditya
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            sudo -u munshi bash -c "cd /opt/munshi/website && git pull"
+            sudo systemctl restart munshifinancials
